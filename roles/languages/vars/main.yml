@@ -7,5 +7,6 @@ languages_packages:
   - python3-devel
   - python3-ipython
   - nodejs
-
-
+  - gcc
+  - gcc-c++
+  - make

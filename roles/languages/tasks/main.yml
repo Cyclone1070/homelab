@@ -20,4 +20,4 @@
   ansible.builtin.command:
     cmd: npm install -g pnpm
     creates: "~/.npm-global/bin/pnpm"
-  # Note: This is a bit complex because fnm needs to be in the subshell path
+
