@@ -1,0 +1,23 @@
+---
+- name: Install system language packages
+  become: true
+  ansible.builtin.dnf:
+    name: "{{ languages_packages }}"
+    state: present
+
+- name: Create local npm global directory
+  ansible.builtin.file:
+    path: "~/.npm-global"
+    state: directory
+    mode: '0755'
+
+- name: Configure npm to use local prefix
+  ansible.builtin.command:
+    cmd: npm config set prefix '~/.npm-global'
+  changed_when: false
+
+- name: Install pnpm globally
+  ansible.builtin.command:
+    cmd: npm install -g pnpm
+    creates: "~/.npm-global/bin/pnpm"
+  # Note: This is a bit complex because fnm needs to be in the subshell path
