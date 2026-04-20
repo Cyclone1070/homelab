@@ -1,4 +1,6 @@
+---
 - name: Install Git
+  become: true
   ansible.builtin.dnf:
     name: git
     state: present
@@ -39,11 +41,19 @@
       Accept: "application/vnd.github.v3+json"
     body_format: json
     body:
-      title: "Homelab Key ({{ inventory_hostname }})"
+      title: "Homelab Key ({{ ansible_facts['hostname'] }})"
       key: "{{ github_ssh_key.public_key }}"
     status_code: [201, 422]
   register: github_api_result
   changed_when: "github_api_result.status == 201"
+
+- name: Check if GitHub is in known_hosts
+  become: true
+  become_user: "{{ ansible_user | default(lookup('env', 'USER')) }}"
+  ansible.builtin.command: ssh-keygen -F github.com
+  register: github_in_known_hosts
+  changed_when: false
+  failed_when: false
 
 - name: Add GitHub to known_hosts
   become: true
@@ -53,6 +63,7 @@
     key: "{{ lookup('pipe', 'ssh-keyscan -t ed25519 github.com') }}"
     path: "~/.ssh/known_hosts"
     state: present
+  when: github_in_known_hosts.rc != 0
 
 - name: Configure SSH to use id_github for GitHub
   become: true
