@@ -1,3 +1,7 @@
+---
+dotfiles_repo: "git@github.com:Cyclone1070/dotfiles.git"
+dotfiles_dest: "~/repos/dotfiles"
+
 shell_packages:
   - zsh
   - tmux
@@ -5,3 +9,16 @@ shell_packages:
   - zoxide
   - lsd
   - util-linux-user
+
+dotfiles_links:
+  - { src: "zsh/.zshrc", dest: "~/.zshrc" }
+  - { src: "zsh/.p10k.zsh", dest: "~/.p10k.zsh" }
+  - { src: "tmux/.tmux.conf", dest: "~/.tmux.conf" }
+  - { src: "tmux/.tmux", dest: "~/.tmux" }
+  - { src: "nvim", dest: "~/.config/nvim" }
+  - { src: "zsh/custom", dest: "~/.oh-my-zsh/custom" }
+
+dotfiles_dirs:
+  - "~/repos"
+  - "~/.config"
+  - "~/.oh-my-zsh"
