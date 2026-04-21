@@ -1,13 +1,21 @@
 ---
+- name: Load OS-specific variables
+  ansible.builtin.include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_distribution }}.yml"
+    - "{{ ansible_os_family }}.yml"
+    - "default.yml"
+
 - name: Enable Ghostty COPR (Fedora)
   become: true
-  ansible.builtin.command: dnf copr enable pgdev/ghostty -y
-  when: ansible_facts['distribution'] == "Fedora"
-  changed_when: false
+  community.general.copr:
+    name: pgdev/ghostty
+    state: enabled
+  when: ansible_distribution == 'Fedora'
 
 - name: Install Desktop Applications
   become: true
-  ansible.builtin.dnf:
+  ansible.builtin.package:
     name: "{{ desktop_packages }}"
     state: present
 

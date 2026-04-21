@@ -1,4 +1,11 @@
 ---
+- name: Load OS-specific variables
+  ansible.builtin.include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_distribution }}.yml"
+    - "{{ ansible_os_family }}.yml"
+    - "default.yml"
+
 - name: Ensure SSH key exists on local machine
   delegate_to: localhost
   become: false
@@ -64,10 +71,10 @@
     - "~/.ssh/id_rsa.pub"
     - "~/.ssh/id_ecdsa.pub"
 
-- name: Install Tailscale (Fedora)
+- name: Install Tailscale
   become: true
-  ansible.builtin.dnf:
-    name: tailscale
+  ansible.builtin.package:
+    name: "{{ bootstrap_packages }}"
     state: present
 
 - name: Enable and start Tailscale service

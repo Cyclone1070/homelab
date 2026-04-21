@@ -1,7 +1,13 @@
----
+- name: Load OS-specific variables
+  ansible.builtin.include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_distribution }}.yml"
+    - "{{ ansible_os_family }}.yml"
+    - "default.yml"
+
 - name: Install system language packages
   become: true
-  ansible.builtin.dnf:
+  ansible.builtin.package:
     name: "{{ languages_packages }}"
     state: present
 
@@ -20,4 +26,3 @@
   ansible.builtin.command:
     cmd: npm install -g pnpm
     creates: "~/.npm-global/bin/pnpm"
-

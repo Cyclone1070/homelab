@@ -1,0 +1,7 @@
+shell_packages:
+  - zsh
+  - tmux
+  - neovim
+  - zoxide
+  - lsd
+  - util-linux-user
