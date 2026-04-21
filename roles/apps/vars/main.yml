@@ -1,0 +1,6 @@
+---
+desktop_packages:
+  - ghostty
+
+desktop_links:
+  - { src: "ghostty", dest: "~/.config/ghostty" }

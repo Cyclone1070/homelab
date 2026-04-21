@@ -1,0 +1,20 @@
+---
+- name: Enable Ghostty COPR (Fedora)
+  become: true
+  ansible.builtin.command: dnf copr enable pgdev/ghostty -y
+  when: ansible_facts['distribution'] == "Fedora"
+  changed_when: false
+
+- name: Install Desktop Applications
+  become: true
+  ansible.builtin.dnf:
+    name: "{{ desktop_packages }}"
+    state: present
+
+- name: Create Desktop Config Symlinks
+  ansible.builtin.file:
+    src: "{{ dotfiles_dest }}/{{ item.src }}"
+    dest: "{{ item.dest }}"
+    state: link
+    force: true
+  loop: "{{ desktop_links }}"

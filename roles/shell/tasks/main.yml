@@ -1,9 +1,4 @@
 ---
-- name: Enable Ghostty COPR (Fedora)
-  become: true
-  ansible.builtin.command: dnf copr enable pgdev/ghostty -y
-  when: ansible_facts['distribution'] == "Fedora"
-  changed_when: false
 
 - name: Install system packages
   become: true
@@ -69,4 +64,3 @@
     state: link
     force: true
   loop: "{{ dotfiles_links }}"
-

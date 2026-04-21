@@ -1,7 +1,0 @@
----
-- name: Development Workstation Configuration
-  hosts: all
-  roles:
-    - git
-    - dotfiles
-    - languages

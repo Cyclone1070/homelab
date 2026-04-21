@@ -6,7 +6,6 @@ dotfiles_packages:
   - zsh
   - tmux
   - neovim
-  - ghostty
   - zoxide
   - lsd
   - util-linux-user
@@ -17,7 +16,6 @@ dotfiles_links:
   - { src: "tmux/.tmux.conf", dest: "~/.tmux.conf" }
   - { src: "tmux/.tmux", dest: "~/.tmux" }
   - { src: "nvim", dest: "~/.config/nvim" }
-  - { src: "ghostty", dest: "~/.config/ghostty" }
   - { src: "zsh/custom", dest: "~/.oh-my-zsh/custom" }
 
 dotfiles_dirs:
