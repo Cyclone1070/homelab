@@ -20,22 +20,32 @@
     state: link
     force: true
 
-- name: Create desktop-on helper script
+- name: Create deon helper script
   become: true
   ansible.builtin.copy:
-    dest: /usr/local/bin/desktop-on
+    dest: /usr/local/bin/deon
     mode: '0755'
     content: |
       #!/bin/bash
       echo "Switching to Graphical Mode..."
       sudo systemctl isolate graphical.target
 
-- name: Create desktop-off helper script
+- name: Create deoff helper script
   become: true
   ansible.builtin.copy:
-    dest: /usr/local/bin/desktop-off
+    dest: /usr/local/bin/deoff
     mode: '0755'
     content: |
       #!/bin/bash
       echo "Switching to Server Mode (Headless)..."
       sudo systemctl isolate multi-user.target
+
+- name: Enable GNOME Dark Mode
+  community.general.dconf:
+    key: "/org/gnome/desktop/interface/color-scheme"
+    value: "'prefer-dark'"
+
+- name: Set legacy GTK theme to Dark
+  community.general.dconf:
+    key: "/org/gnome/desktop/interface/gtk-theme"
+    value: "'Adwaita-dark'"

@@ -13,6 +13,16 @@
     state: enabled
   when: ansible_facts['distribution'] == 'Fedora'
 
+- name: Add Antigravity RPM Repository
+  become: true
+  ansible.builtin.yum_repository:
+    name: antigravity-rpm
+    description: Antigravity RPM Repository
+    baseurl: https://us-central1-yum.pkg.dev/projects/antigravity-auto-updater-dev/antigravity-rpm
+    enabled: true
+    gpgcheck: false
+  when: ansible_facts['os_family'] == 'RedHat'
+
 - name: Install Desktop Applications
   become: true
   ansible.builtin.package:

@@ -1,5 +1,6 @@
 desktop_packages:
   - ghostty
+  - antigravity
 
 desktop_links:
   - { src: "ghostty", dest: "~/.config/ghostty" }
