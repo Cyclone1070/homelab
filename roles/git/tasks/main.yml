@@ -13,8 +13,6 @@
     state: present
 
 - name: Generate SSH key for GitHub
-  become: true
-  become_user: "{{ ansible_user | default(lookup('env', 'USER')) }}"
   ansible.builtin.openssh_keypair:
     path: "~/.ssh/id_github"
     type: ed25519
@@ -22,16 +20,12 @@
   register: github_ssh_key
 
 - name: Configure Git Global Name
-  become: true
-  become_user: "{{ ansible_user | default(lookup('env', 'USER')) }}"
   community.general.git_config:
     name: user.name
     value: "Huy Hoang Mai"
     scope: global
 
 - name: Configure Git Global Email
-  become: true
-  become_user: "{{ ansible_user | default(lookup('env', 'USER')) }}"
   community.general.git_config:
     name: user.email
     value: "hoangmai1070@gmail.com"
@@ -55,16 +49,12 @@
   changed_when: "github_api_result.status == 201"
 
 - name: Check if GitHub is in known_hosts
-  become: true
-  become_user: "{{ ansible_user | default(lookup('env', 'USER')) }}"
   ansible.builtin.command: ssh-keygen -F github.com
   register: github_in_known_hosts
   changed_when: false
   failed_when: false
 
 - name: Add GitHub to known_hosts
-  become: true
-  become_user: "{{ ansible_user | default(lookup('env', 'USER')) }}"
   ansible.builtin.known_hosts:
     name: github.com
     key: "{{ lookup('pipe', 'ssh-keyscan -t ed25519 github.com') }}"
@@ -73,8 +63,6 @@
   when: github_in_known_hosts.rc != 0
 
 - name: Configure SSH to use id_github for GitHub
-  become: true
-  become_user: "{{ ansible_user | default(lookup('env', 'USER')) }}"
   ansible.builtin.blockinfile:
     path: "~/.ssh/config"
     create: true

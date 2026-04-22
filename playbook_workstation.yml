@@ -1,7 +1,6 @@
 ---
 - name: Workstation Configuration
   hosts: all
-  become: true
   vars_files:
     - vars/secrets.yml
 
@@ -9,3 +8,5 @@
     - git
     - shell
     - languages
+    - desktop
+    - apps

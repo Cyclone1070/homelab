@@ -102,8 +102,6 @@
   changed_when: tailscale_join_result.rc == 0
 
 - name: Silence terminal login banners (Hushlogin)
-  become: true
-  become_user: "{{ ansible_user | default(lookup('env', 'USER')) }}"
   ansible.builtin.copy:
     content: ""
     dest: "~/.hushlogin"

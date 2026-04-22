@@ -1,0 +1,41 @@
+---
+- name: Load OS-specific variables
+  ansible.builtin.include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_facts['distribution'] }}.yml"
+    - "{{ ansible_facts['os_family'] }}.yml"
+    - "default.yml"
+
+- name: Install GNOME Desktop Environment
+  become: true
+  ansible.builtin.package:
+    name: "{{ desktop_environment_group }}"
+    state: present
+
+- name: Ensure default boot is Server Mode (Multi-User)
+  become: true
+  ansible.builtin.file:
+    src: /lib/systemd/system/multi-user.target
+    dest: /etc/systemd/system/default.target
+    state: link
+    force: true
+
+- name: Create desktop-on helper script
+  become: true
+  ansible.builtin.copy:
+    dest: /usr/local/bin/desktop-on
+    mode: '0755'
+    content: |
+      #!/bin/bash
+      echo "Switching to Graphical Mode..."
+      sudo systemctl isolate graphical.target
+
+- name: Create desktop-off helper script
+  become: true
+  ansible.builtin.copy:
+    dest: /usr/local/bin/desktop-off
+    mode: '0755'
+    content: |
+      #!/bin/bash
+      echo "Switching to Server Mode (Headless)..."
+      sudo systemctl isolate multi-user.target

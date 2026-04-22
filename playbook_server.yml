@@ -1,6 +1,5 @@
 - name: Server Configuration
   hosts: all
-  become: true
   vars_files:
     - vars/secrets.yml
 

@@ -20,22 +20,16 @@
     shell: /usr/bin/zsh
 
 - name: Install Oh My Zsh
-  become: true
-  become_user: "{{ ansible_user | default(lookup('env', 'USER')) }}"
   ansible.builtin.shell:
     cmd: sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
     creates: "~/.oh-my-zsh"
 
 - name: Check Oh My Zsh custom directory
-  become: true
-  become_user: "{{ ansible_user | default(lookup('env', 'USER')) }}"
   ansible.builtin.stat:
     path: "~/.oh-my-zsh/custom"
   register: omz_custom_stat
 
 - name: Remove default Oh My Zsh custom directory
-  become: true
-  become_user: "{{ ansible_user | default(lookup('env', 'USER')) }}"
   ansible.builtin.file:
     path: "~/.oh-my-zsh/custom"
     state: absent
@@ -44,8 +38,6 @@
     - not omz_custom_stat.stat.islnk
 
 - name: Ensure parent directories exist
-  become: true
-  become_user: "{{ ansible_user | default(lookup('env', 'USER')) }}"
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
@@ -53,8 +45,6 @@
   loop: "{{ dotfiles_dirs }}"
 
 - name: Clone dotfiles repository
-  become: true
-  become_user: "{{ ansible_user | default(lookup('env', 'USER')) }}"
   ansible.builtin.git:
     repo: "{{ dotfiles_repo }}"
     dest: "{{ dotfiles_dest }}"
@@ -63,8 +53,6 @@
     version: main
 
 - name: Create dotfile symlinks
-  become: true
-  become_user: "{{ ansible_user | default(lookup('env', 'USER')) }}"
   ansible.builtin.file:
     src: "{{ dotfiles_dest }}/{{ item.src }}"
     dest: "{{ item.dest }}"
