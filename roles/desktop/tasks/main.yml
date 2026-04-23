@@ -20,21 +20,35 @@
     state: link
     force: true
 
-- name: Create deon helper script (Dynamic Identity Aware)
+- name: Grant user permission for TTY and Video hardware
+  become: true
+  ansible.builtin.user:
+    name: "{{ ansible_user | default(lookup('env', 'USER')) }}"
+    groups: "video,tty"
+    append: true
+
+- name: Create deon helper script (Remote Ignition Capable)
   become: true
   ansible.builtin.copy:
     dest: /usr/local/bin/deon
     mode: '0755'
     content: |
       #!/bin/bash
-      echo "Launching private GNOME session for $USER..."
+      # deon: Remote/Local Desktop Ignition
+      echo "Igniting GNOME session on TTY2..."
 
-      # 1. Start GNOME Wayland session for the current TTY user
-      XDG_SESSION_TYPE=wayland dbus-run-session gnome-session
+      # 1. Kill any existing session unit
+      systemctl --user stop gnome-remote.scope 2>/dev/null
 
-      # 2. On logout, return the screen to GDM (VT1) and exit the shell
-      sudo chvt 1
-      logout
+      # 2. Launch GNOME via systemd-run
+      # We target /dev/tty2 to "force" it onto the physical monitor
+      systemd-run --user --scope --unit=gnome-remote \
+          --property="TTYPath=/dev/tty2" \
+          --property="StandardInput=tty" \
+          --property="StandardOutput=tty" \
+          dbus-run-session gnome-session &
+
+      echo "Session started. You can now connect via Moonlight/Sunshine."
 
 - name: Create deoff helper script
   become: true
@@ -43,8 +57,10 @@
     mode: '0755'
     content: |
       #!/bin/bash
-      echo "Switching to Server Mode (Headless)..."
-      sudo systemctl isolate multi-user.target
+      # deoff: Remote/Local Desktop Shutdown
+      echo "Extinguishing GNOME session..."
+      systemctl --user stop gnome-remote.scope
+      echo "Back to Server Mode."
 
 - name: Enable GNOME Dark Mode
   community.general.dconf:
