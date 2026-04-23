@@ -6,6 +6,8 @@ desktop_packages:
   - Sunshine
   - brave-browser
   - uget
+  - steam
+  - steam-devices
 
 desktop_links:
   - { src: "ghostty", dest: "~/.config/ghostty" }

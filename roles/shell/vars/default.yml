@@ -11,6 +11,9 @@ shell_packages:
   - util-linux-user
   - jq
   - pipx
+  - p7zip
+  - p7zip-plugins
+  - unrar
 
 dotfiles_links:
   - { src: "zsh/.zshrc", dest: "~/.zshrc" }
