@@ -20,15 +20,21 @@
     state: link
     force: true
 
-- name: Create deon helper script
+- name: Create deon helper script (Dynamic Identity Aware)
   become: true
   ansible.builtin.copy:
     dest: /usr/local/bin/deon
     mode: '0755'
     content: |
       #!/bin/bash
-      echo "Switching to Graphical Mode..."
-      sudo systemctl isolate graphical.target
+      echo "Launching private GNOME session for $USER..."
+
+      # 1. Start GNOME Wayland session for the current TTY user
+      XDG_SESSION_TYPE=wayland dbus-run-session gnome-session
+
+      # 2. On logout, return the screen to GDM (VT1) and exit the shell
+      sudo chvt 1
+      logout
 
 - name: Create deoff helper script
   become: true

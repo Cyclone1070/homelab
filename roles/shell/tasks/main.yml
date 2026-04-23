@@ -60,6 +60,17 @@
     force: true
   loop: "{{ dotfiles_links }}"
 
+- name: Install aria2p via pipx
+  community.general.pipx:
+    name: aria2p
+    state: present
+
+- name: Enable user lingering for background services
+  become: true
+  ansible.builtin.command:
+    cmd: "loginctl enable-linger {{ ansible_facts['user_id'] }}"
+    creates: "/var/lib/systemd/linger/{{ ansible_facts['user_id'] }}"
+
 - name: Include aria2-engine role
   ansible.builtin.include_role:
     name: aria2-engine

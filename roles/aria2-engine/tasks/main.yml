@@ -22,6 +22,9 @@
       dir={{ ansible_facts['user_dir'] }}/Downloads
       max-connection-per-server={{ aria2_max_connections }}
       split={{ aria2_split }}
+      force-save=false
+      seed-time=0
+      max-download-result=20
     mode: '0644'
 
 - name: Ensure systemd user directory exists
