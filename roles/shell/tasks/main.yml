@@ -71,6 +71,22 @@
     cmd: "loginctl enable-linger {{ ansible_facts['user_id'] }}"
     creates: "/var/lib/systemd/linger/{{ ansible_facts['user_id'] }}"
 
+- name: Clone SteamTinkerLaunch repo
+  become: true
+  ansible.builtin.git:
+    repo: https://github.com/sonic2kk/steamtinkerlaunch.git
+    dest: /opt/steamtinkerlaunch
+    version: master
+    update: true
+
+- name: Symlink SteamTinkerLaunch to bin
+  become: true
+  ansible.builtin.file:
+    src: /opt/steamtinkerlaunch/steamtinkerlaunch
+    dest: /usr/local/bin/steamtinkerlaunch
+    state: link
+    force: true
+
 - name: Include aria2-engine role
   ansible.builtin.include_role:
     name: aria2-engine
