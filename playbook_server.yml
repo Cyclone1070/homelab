@@ -4,5 +4,7 @@
     - vars/secrets.yml
 
   roles:
-    - git
-    - shell
+    - role: git
+      tags: git
+    - role: shell
+      tags: shell

@@ -1,0 +1,5 @@
+---
+aria2_port: 6800
+aria2_rpc_listen_all: true
+aria2_max_connections: 16
+aria2_split: 16

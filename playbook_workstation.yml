@@ -5,8 +5,13 @@
     - vars/secrets.yml
 
   roles:
-    - git
-    - shell
-    - languages
-    - desktop
-    - apps
+    - role: git
+      tags: git
+    - role: shell
+      tags: shell
+    - role: languages
+      tags: languages
+    - role: desktop
+      tags: desktop
+    - role: apps
+      tags: apps

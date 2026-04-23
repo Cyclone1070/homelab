@@ -13,6 +13,62 @@
     state: enabled
   when: ansible_facts['distribution'] == 'Fedora'
 
+- name: Enable Sunshine Beta COPR (Fedora)
+  become: true
+  community.general.copr:
+    name: lizardbyte/beta
+    state: enabled
+  when: ansible_facts['distribution'] == 'Fedora'
+
+- name: Enable RPM Fusion Free Repository
+  become: true
+  ansible.builtin.package:
+    name: "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ ansible_facts['distribution_major_version'] }}.noarch.rpm"
+    state: present
+    disable_gpg_check: true
+  when: ansible_facts['os_family'] == 'RedHat'
+
+- name: Enable RPM Fusion Nonfree Repository
+  become: true
+  ansible.builtin.package:
+    name: "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ ansible_facts['distribution_major_version'] }}.noarch.rpm"
+    state: present
+    disable_gpg_check: true
+  when: ansible_facts['os_family'] == 'RedHat'
+
+- name: Swap to full ffmpeg and install Intel media drivers
+  become: true
+  ansible.builtin.dnf:
+    name:
+      - ffmpeg
+      - intel-media-driver
+      - libva-utils
+    state: present
+    allowerasing: true
+  when: ansible_facts['os_family'] == 'RedHat'
+
+- name: Configure udev rule for Sunshine uinput access
+  become: true
+  ansible.builtin.copy:
+    dest: /etc/udev/rules.d/85-sunshine.rules
+    content: 'KERNEL=="uinput", SUBSYSTEM=="misc", OPTIONS+="static_node=uinput", TAG+="uaccess"'
+    mode: '0644'
+
+- name: Open Sunshine firewall ports
+  become: true
+  ansible.posix.firewalld:
+    port: "{{ item }}"
+    permanent: true
+    state: enabled
+    immediate: true
+  loop:
+    - 47984-47990/tcp
+    - 48010/tcp
+    - 47998-48000/udp
+    - 48002/udp
+    - 48010/udp
+  when: ansible_facts['os_family'] == 'RedHat'
+
 - name: Add Antigravity RPM Repository
   become: true
   ansible.builtin.yum_repository:
@@ -21,6 +77,17 @@
     baseurl: https://us-central1-yum.pkg.dev/projects/antigravity-auto-updater-dev/antigravity-rpm
     enabled: true
     gpgcheck: false
+  when: ansible_facts['os_family'] == 'RedHat'
+
+- name: Add Brave Browser Repository
+  become: true
+  ansible.builtin.yum_repository:
+    name: brave-browser
+    description: Brave Browser Repository
+    baseurl: https://brave-browser-rpm-release.s3.brave.com/x86_64/
+    enabled: true
+    gpgcheck: true
+    gpgkey: https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
   when: ansible_facts['os_family'] == 'RedHat'
 
 - name: Install Desktop Applications
@@ -36,3 +103,8 @@
     state: link
     force: true
   loop: "{{ desktop_links }}"
+
+- name: Include aria2-engine role
+  ansible.builtin.include_role:
+    name: aria2-engine
+  tags: [apps, aria2-engine]

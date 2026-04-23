@@ -1,6 +1,11 @@
+dotfiles_dest: "~/repos/dotfiles"
+
 desktop_packages:
   - ghostty
   - antigravity
+  - Sunshine
+  - brave-browser
+  - uget
 
 desktop_links:
   - { src: "ghostty", dest: "~/.config/ghostty" }

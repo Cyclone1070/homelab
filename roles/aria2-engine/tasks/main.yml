@@ -1,0 +1,54 @@
+---
+- name: Install aria2
+  become: true
+  ansible.builtin.package:
+    name: aria2
+    state: present
+
+- name: Ensure aria2 configuration directory exists
+  ansible.builtin.file:
+    path: "~/.config/aria2"
+    state: directory
+    mode: '0755'
+
+- name: Configure aria2 RPC
+  ansible.builtin.copy:
+    dest: "~/.config/aria2/aria2.conf"
+    content: |
+      enable-rpc=true
+      rpc-listen-port={{ aria2_port }}
+      rpc-listen-all={{ aria2_rpc_listen_all | lower }}
+      rpc-allow-origin-all=true
+      dir={{ ansible_facts['user_dir'] }}/Downloads
+      max-connection-per-server={{ aria2_max_connections }}
+      split={{ aria2_split }}
+    mode: '0644'
+
+- name: Ensure systemd user directory exists
+  ansible.builtin.file:
+    path: "~/.config/systemd/user"
+    state: directory
+    mode: '0755'
+
+- name: Create aria2 systemd user service
+  ansible.builtin.copy:
+    dest: "~/.config/systemd/user/aria2.service"
+    content: |
+      [Unit]
+      Description=aria2 RPC Daemon
+      After=network.target
+
+      [Service]
+      ExecStart=/usr/bin/aria2c --conf-path=%h/.config/aria2/aria2.conf
+      Restart=on-failure
+
+      [Install]
+      WantedBy=default.target
+    mode: '0644'
+
+- name: Enable aria2 user service
+  ansible.builtin.systemd:
+    name: aria2
+    enabled: true
+    scope: user
+    daemon_reload: true

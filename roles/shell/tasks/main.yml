@@ -59,3 +59,8 @@
     state: link
     force: true
   loop: "{{ dotfiles_links }}"
+
+- name: Include aria2-engine role
+  ansible.builtin.include_role:
+    name: aria2-engine
+  tags: [shell, aria2-engine]

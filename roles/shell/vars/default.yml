@@ -9,6 +9,7 @@ shell_packages:
   - zoxide
   - lsd
   - util-linux-user
+  - jq
 
 dotfiles_links:
   - { src: "zsh/.zshrc", dest: "~/.zshrc" }
