@@ -20,50 +20,6 @@
     state: link
     force: true
 
-- name: Enable GDM Automatic Login (Fedora 43 Gold Standard)
-  become: true
-  ansible.builtin.ini_file:
-    path: /etc/gdm/custom.conf
-    section: daemon
-    option: "{{ item.key }}"
-    value: "{{ item.value }}"
-    no_extra_spaces: true
-    mode: '0644'
-  loop:
-    - { key: "AutomaticLoginEnable", value: "true" }
-    - { key: "AutomaticLogin", value: "cyc" }
-    - { key: "DefaultSession", value: "gnome.desktop" }
-
-- name: Synchronize PAM stack for Autologin
-  become: true
-  ansible.builtin.command: authselect select local with-silent-lastlog with-mdns4 --force
-  changed_when: true
-
-- name: Fix SELinux context for GDM configuration
-  become: true
-  ansible.builtin.command: restorecon -v /etc/gdm/custom.conf
-  changed_when: false
-
-- name: Create deon helper script
-  become: true
-  ansible.builtin.copy:
-    dest: /usr/local/bin/deon
-    mode: '0755'
-    content: |
-      #!/bin/bash
-      echo "Switching to Graphical Mode (PC)..."
-      sudo systemctl isolate graphical.target
-
-- name: Create deoff helper script
-  become: true
-  ansible.builtin.copy:
-    dest: /usr/local/bin/deoff
-    mode: '0755'
-    content: |
-      #!/bin/bash
-      echo "Switching to Server Mode (Headless)..."
-      sudo systemctl isolate multi-user.target
-
 - name: Enable GNOME Dark Mode
   community.general.dconf:
     key: "/org/gnome/desktop/interface/color-scheme"
