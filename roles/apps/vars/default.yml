@@ -4,7 +4,9 @@ desktop_packages:
   - ghostty
   - antigravity
   - Sunshine
+  - gamescope
   - brave-browser
+  - cage
   - uget
   - steam
   - steam-devices

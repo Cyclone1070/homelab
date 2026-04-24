@@ -103,18 +103,11 @@
     state: link
     force: true
   loop: "{{ desktop_links }}"
-
-- name: Ensure Sunshine user service is disabled (manual start only)
-  ansible.builtin.systemd:
-    name: app-dev.lizardbyte.app.Sunshine
-    enabled: false
-    scope: user
-
-- name: Add user to input group for Sunshine
+- name: Add user to input, video, and render groups for Sunshine
   become: true
   ansible.builtin.user:
     name: "{{ ansible_facts['user_id'] }}"
-    groups: input
+    groups: input,video,render
     append: true
 
 - name: Create Sunshine systemd override directory
@@ -123,13 +116,22 @@
     state: directory
     mode: '0755'
 
-- name: Configure Sunshine environment overrides
+- name: Configure Sunshine systemd override (Headless Wayland via Cage)
   ansible.builtin.copy:
-    dest: "~/.config/systemd/user/app-dev.lizardbyte.app.Sunshine.service.d/env.conf"
+    dest: "~/.config/systemd/user/app-dev.lizardbyte.app.Sunshine.service.d/override.conf"
     content: |
+      [Unit]
+      After=default.target
+
       [Service]
-      Environment=WAYLAND_DISPLAY=wayland-0
-      Environment=XDG_RUNTIME_DIR=/run/user/{{ ansible_facts['user_id'] }}
+      ExecStart=
+      ExecStart=/usr/bin/cage -s -- /usr/bin/sunshine
+      Environment=WLR_BACKENDS=headless
+      Environment=WLR_LIBSEAT_BACKEND=builtin
+      Environment=XDG_RUNTIME_DIR=/run/user/%U
+
+      [Install]
+      WantedBy=default.target
     mode: '0644'
 
 - name: Discover Tailscale domain
@@ -147,7 +149,36 @@
     create: true
     mode: '0644'
 
+- name: Get real path of sunshine binary
+  ansible.builtin.command: readlink -f /usr/bin/sunshine
+  register: sunshine_real_path
+  changed_when: false
+
+- name: Grant Sunshine KMS capture capabilities (Idempotent Check)
+  become: true
+  ansible.builtin.shell: |
+    CURRENT=$(getcap {{ sunshine_real_path.stdout }})
+    EXPECTED="{{ sunshine_real_path.stdout }} cap_sys_admin,cap_sys_nice=p"
+    if [ "$CURRENT" != "$EXPECTED" ]; then
+      setcap cap_sys_admin,cap_sys_nice=p {{ sunshine_real_path.stdout }}
+      echo "CHANGED"
+    fi
+  register: setcap_check
+  changed_when: "'CHANGED' in setcap_check.stdout"
+
 - name: Include aria2-engine role
   ansible.builtin.include_role:
     name: aria2-engine
   tags: [apps, aria2-engine]
+
+- name: Reload systemd user daemon
+  ansible.builtin.systemd:
+    daemon_reload: true
+    scope: user
+
+- name: Ensure Sunshine user service is disabled and stopped
+  ansible.builtin.systemd:
+    name: app-dev.lizardbyte.app.Sunshine
+    enabled: false
+    state: stopped
+    scope: user
