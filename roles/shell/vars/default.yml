@@ -9,15 +9,10 @@ shell_packages:
   - zoxide
   - lsd
   - util-linux-user
-  - jq
   - pipx
   - p7zip
   - p7zip-plugins
-  - unrar
   - unar
-  - yad
-  - xprop
-  - python3-vdf
 
 dotfiles_links:
   - { src: "zsh/.zshrc", dest: "~/.zshrc" }
