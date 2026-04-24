@@ -104,6 +104,49 @@
     force: true
   loop: "{{ desktop_links }}"
 
+- name: Ensure Sunshine user service is disabled (manual start only)
+  ansible.builtin.systemd:
+    name: app-dev.lizardbyte.app.Sunshine
+    enabled: false
+    scope: user
+
+- name: Add user to input group for Sunshine
+  become: true
+  ansible.builtin.user:
+    name: "{{ ansible_facts['user_id'] }}"
+    groups: input
+    append: true
+
+- name: Create Sunshine systemd override directory
+  ansible.builtin.file:
+    path: "~/.config/systemd/user/app-dev.lizardbyte.app.Sunshine.service.d"
+    state: directory
+    mode: '0755'
+
+- name: Configure Sunshine environment overrides
+  ansible.builtin.copy:
+    dest: "~/.config/systemd/user/app-dev.lizardbyte.app.Sunshine.service.d/env.conf"
+    content: |
+      [Service]
+      Environment=WAYLAND_DISPLAY=wayland-0
+      Environment=XDG_RUNTIME_DIR=/run/user/{{ ansible_facts['user_id'] }}
+    mode: '0644'
+
+- name: Discover Tailscale domain
+  ansible.builtin.shell: set -o pipefail && tailscale status --json | grep -oE "[a-z0-9]+\.ts\.net" | head -n 1
+  args:
+    executable: /bin/bash
+  register: tailnet_domain
+  changed_when: false
+
+- name: Configure Sunshine CSRF allowed origins
+  ansible.builtin.lineinfile:
+    path: "~/.config/sunshine/sunshine.conf"
+    regexp: '^csrf_allowed_origins ='
+    line: "csrf_allowed_origins = https://{{ ansible_facts['hostname'] }}:47990,https://localhost:47990,https://{{ ansible_facts['tailscale0']['ipv4']['address'] }}:47990,https://{{ ansible_facts['hostname'] }}.{{ tailnet_domain.stdout }}:47990"
+    create: true
+    mode: '0644'
+
 - name: Include aria2-engine role
   ansible.builtin.include_role:
     name: aria2-engine
