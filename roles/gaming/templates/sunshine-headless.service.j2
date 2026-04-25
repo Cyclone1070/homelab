@@ -1,0 +1,18 @@
+[Unit]
+Description=Sunshine streaming via headless Sway
+After=sway-sunshine.service
+Requires=sway-sunshine.service
+
+[Service]
+Type=simple
+Environment=WAYLAND_DISPLAY=wayland-1
+Environment=SWAYSOCK=/run/user/1002/sway-sunshine.sock
+Environment=XDG_SESSION_TYPE=wayland
+Environment=XDG_CURRENT_DESKTOP=sway
+ExecStartPre=/bin/sleep 2
+ExecStart=/usr/bin/sg input -c /usr/bin/sunshine
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

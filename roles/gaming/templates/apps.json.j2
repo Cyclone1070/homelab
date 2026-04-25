@@ -1,0 +1,56 @@
+{
+  "env": {
+    "PATH": "{{ ansible_env.PATH }}:{{ ansible_env.HOME }}/.local/bin",
+    "SWAYSOCK": "/run/user/1002/sway-sunshine.sock"
+  },
+  "apps": [
+    {
+      "name": "Desktop",
+      "image-path": "desktop.png",
+      "prep-cmd": [
+        {
+          "do": "{{ ansible_env.HOME }}/.config/sway-sunshine/restore-default-sink.sh",
+          "undo": ""
+        },
+        {
+          "do": "{{ ansible_env.HOME }}/.config/sway-sunshine/set-resolution.sh",
+          "undo": "{{ ansible_env.HOME }}/.config/sway-sunshine/reset-resolution.sh"
+        }
+      ]
+    },
+    {
+      "name": "Steam Big Picture",
+      "detached": [
+        "{{ ansible_env.HOME }}/.config/sway-sunshine/start-steam-game.sh bigpicture"
+      ],
+      "prep-cmd": [
+        {
+          "do": "{{ ansible_env.HOME }}/.config/sway-sunshine/restore-default-sink.sh",
+          "undo": ""
+        },
+        {
+          "do": "{{ ansible_env.HOME }}/.config/sway-sunshine/set-resolution.sh",
+          "undo": "{{ ansible_env.HOME }}/.config/sway-sunshine/stop-steam-game.sh"
+        }
+      ],
+      "image-path": "steam.png"
+    },
+    {
+      "name": "Steam",
+      "detached": [
+        "{{ ansible_env.HOME }}/.config/sway-sunshine/start-steam-game.sh 0"
+      ],
+      "prep-cmd": [
+        {
+          "do": "{{ ansible_env.HOME }}/.config/sway-sunshine/restore-default-sink.sh",
+          "undo": ""
+        },
+        {
+          "do": "{{ ansible_env.HOME }}/.config/sway-sunshine/set-resolution.sh",
+          "undo": "{{ ansible_env.HOME }}/.config/sway-sunshine/stop-steam-game.sh"
+        }
+      ],
+      "image-path": "steam.png"
+    }
+  ]
+}

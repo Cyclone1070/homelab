@@ -3,13 +3,8 @@ dotfiles_dest: "~/repos/dotfiles"
 desktop_packages:
   - ghostty
   - antigravity
-  - Sunshine
-  - gamescope
   - brave-browser
-  - cage
   - uget
-  - steam
-  - steam-devices
 
 desktop_links:
   - { src: "ghostty", dest: "~/.config/ghostty" }

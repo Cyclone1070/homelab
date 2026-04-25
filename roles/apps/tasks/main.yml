@@ -13,13 +13,6 @@
     state: enabled
   when: ansible_facts['distribution'] == 'Fedora'
 
-- name: Enable Sunshine Beta COPR (Fedora)
-  become: true
-  community.general.copr:
-    name: lizardbyte/beta
-    state: enabled
-  when: ansible_facts['distribution'] == 'Fedora'
-
 - name: Enable RPM Fusion Free Repository
   become: true
   ansible.builtin.package:
@@ -34,39 +27,6 @@
     name: "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ ansible_facts['distribution_major_version'] }}.noarch.rpm"
     state: present
     disable_gpg_check: true
-  when: ansible_facts['os_family'] == 'RedHat'
-
-- name: Swap to full ffmpeg and install Intel media drivers
-  become: true
-  ansible.builtin.dnf:
-    name:
-      - ffmpeg
-      - intel-media-driver
-      - libva-utils
-    state: present
-    allowerasing: true
-  when: ansible_facts['os_family'] == 'RedHat'
-
-- name: Configure udev rule for Sunshine uinput access
-  become: true
-  ansible.builtin.copy:
-    dest: /etc/udev/rules.d/85-sunshine.rules
-    content: 'KERNEL=="uinput", SUBSYSTEM=="misc", OPTIONS+="static_node=uinput", TAG+="uaccess"'
-    mode: '0644'
-
-- name: Open Sunshine firewall ports
-  become: true
-  ansible.posix.firewalld:
-    port: "{{ item }}"
-    permanent: true
-    state: enabled
-    immediate: true
-  loop:
-    - 47984-47990/tcp
-    - 48010/tcp
-    - 47998-48000/udp
-    - 48002/udp
-    - 48010/udp
   when: ansible_facts['os_family'] == 'RedHat'
 
 - name: Add Antigravity RPM Repository
@@ -103,68 +63,7 @@
     state: link
     force: true
   loop: "{{ desktop_links }}"
-- name: Add user to input, video, and render groups for Sunshine
-  become: true
-  ansible.builtin.user:
-    name: "{{ ansible_facts['user_id'] }}"
-    groups: input,video,render
-    append: true
 
-- name: Create Sunshine systemd override directory
-  ansible.builtin.file:
-    path: "~/.config/systemd/user/app-dev.lizardbyte.app.Sunshine.service.d"
-    state: directory
-    mode: '0755'
-
-- name: Configure Sunshine systemd override (Headless Wayland via Cage)
-  ansible.builtin.copy:
-    dest: "~/.config/systemd/user/app-dev.lizardbyte.app.Sunshine.service.d/override.conf"
-    content: |
-      [Unit]
-      After=default.target
-
-      [Service]
-      ExecStart=
-      ExecStart=/usr/bin/cage -s -- /usr/bin/sunshine
-      Environment=WLR_BACKENDS=headless
-      Environment=WLR_LIBSEAT_BACKEND=builtin
-      Environment=XDG_RUNTIME_DIR=/run/user/%U
-
-      [Install]
-      WantedBy=default.target
-    mode: '0644'
-
-- name: Discover Tailscale domain
-  ansible.builtin.shell: set -o pipefail && tailscale status --json | grep -oE "[a-z0-9]+\.ts\.net" | head -n 1
-  args:
-    executable: /bin/bash
-  register: tailnet_domain
-  changed_when: false
-
-- name: Configure Sunshine CSRF allowed origins
-  ansible.builtin.lineinfile:
-    path: "~/.config/sunshine/sunshine.conf"
-    regexp: '^csrf_allowed_origins ='
-    line: "csrf_allowed_origins = https://{{ ansible_facts['hostname'] }}:47990,https://localhost:47990,https://{{ ansible_facts['tailscale0']['ipv4']['address'] }}:47990,https://{{ ansible_facts['hostname'] }}.{{ tailnet_domain.stdout }}:47990"
-    create: true
-    mode: '0644'
-
-- name: Get real path of sunshine binary
-  ansible.builtin.command: readlink -f /usr/bin/sunshine
-  register: sunshine_real_path
-  changed_when: false
-
-- name: Grant Sunshine KMS capture capabilities (Idempotent Check)
-  become: true
-  ansible.builtin.shell: |
-    CURRENT=$(getcap {{ sunshine_real_path.stdout }})
-    EXPECTED="{{ sunshine_real_path.stdout }} cap_sys_admin,cap_sys_nice=p"
-    if [ "$CURRENT" != "$EXPECTED" ]; then
-      setcap cap_sys_admin,cap_sys_nice=p {{ sunshine_real_path.stdout }}
-      echo "CHANGED"
-    fi
-  register: setcap_check
-  changed_when: "'CHANGED' in setcap_check.stdout"
 
 - name: Include aria2-engine role
   ansible.builtin.include_role:
@@ -174,11 +73,4 @@
 - name: Reload systemd user daemon
   ansible.builtin.systemd:
     daemon_reload: true
-    scope: user
-
-- name: Ensure Sunshine user service is disabled and stopped
-  ansible.builtin.systemd:
-    name: app-dev.lizardbyte.app.Sunshine
-    enabled: false
-    state: stopped
     scope: user

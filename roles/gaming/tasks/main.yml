@@ -1,0 +1,204 @@
+---
+- name: Decommission Native Sunshine
+  become: true
+  ansible.builtin.systemd:
+    name: app-dev.lizardbyte.app.Sunshine.service
+    state: stopped
+    enabled: false
+    scope: user
+  ignore_errors: true
+  environment:
+    XDG_RUNTIME_DIR: "/run/user/{{ ansible_real_user_id | default(1000) }}"
+
+- name: Install required packages
+  ansible.builtin.dnf:
+    name:
+      - sway
+      - swaybg
+      - Sunshine
+      - jq
+      - seatd
+    state: present
+  become: true
+
+- name: Ensure user is in required groups
+  ansible.builtin.user:
+    name: "{{ ansible_env.USER }}"
+    groups: video,input,render,seat
+    append: true
+  become: true
+
+- name: Enable and start seatd
+  ansible.builtin.systemd:
+    name: seatd
+    state: started
+    enabled: true
+  become: true
+
+- name: Install dependencies
+  become: true
+  ansible.builtin.package:
+    name:
+      - pipewire
+      - wireplumber
+    state: present
+
+- name: Create required directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - "{{ ansible_env.HOME }}/.config/sway-sunshine"
+    - "{{ ansible_env.HOME }}/.config/sunshine"
+    - "{{ ansible_env.HOME }}/.config/systemd/user"
+    - "{{ ansible_env.HOME }}/.config/pipewire/pipewire.conf.d"
+    - "{{ ansible_env.HOME }}/.config/sway-sunshine/bin"
+
+- name: Deploy Sway config
+  ansible.builtin.template:
+    src: "sway_config.j2"
+    dest: "{{ ansible_env.HOME }}/.config/sway-sunshine/config"
+    mode: '0644'
+
+- name: Deploy Sway resolution scripts
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ ansible_env.HOME }}/.config/sway-sunshine/{{ item }}"
+    mode: '0755'
+  loop:
+    - set-resolution.sh
+    - reset-resolution.sh
+
+- name: Deploy restore-default-sink.sh
+  ansible.builtin.template:
+    src: "restore-default-sink.sh.j2"
+    dest: "{{ ansible_env.HOME }}/.config/sway-sunshine/restore-default-sink.sh"
+    mode: '0755'
+
+- name: Deploy Steam launch scripts
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ ansible_env.HOME }}/.config/sway-sunshine/{{ item }}"
+    mode: '0755'
+  loop:
+    - start-steam-game.sh
+    - stop-steam-game.sh
+
+- name: Deploy bwrap-shim
+  ansible.builtin.copy:
+    src: "roles/gaming/files/bin/bwrap"
+    dest: "{{ ansible_env.HOME }}/.config/sway-sunshine/bin/bwrap"
+    mode: '0755'
+
+- name: Deploy Sunshine config
+  ansible.builtin.copy:
+    src: "roles/gaming/files/sunshine-headless-sway/sunshine/sunshine.conf"
+    dest: "{{ ansible_env.HOME }}/.config/sunshine/sunshine.conf"
+    mode: '0644'
+    force: false
+
+- name: Configure Sunshine audio and capture
+  ansible.builtin.lineinfile:
+    path: "{{ ansible_env.HOME }}/.config/sunshine/sunshine.conf"
+    regexp: "^{{ item.key }} ="
+    line: "{{ item.key }} = {{ item.value }}"
+  loop:
+    - { key: 'audio_sink', value: 'sink-sunshine-stereo' }
+    - { key: 'capture', value: 'wlr' }
+
+- name: Deploy Sunshine apps.json
+  ansible.builtin.template:
+    src: "apps.json.j2"
+    dest: "{{ ansible_env.HOME }}/.config/sunshine/apps.json"
+    mode: '0644'
+    force: false
+
+- name: Deploy PipeWire null sink config
+  ansible.builtin.copy:
+    src: "roles/gaming/files/sunshine-headless-sway/pipewire/sunshine-null-sink.conf"
+    dest: "{{ ansible_env.HOME }}/.config/pipewire/pipewire.conf.d/sunshine-null-sink.conf"
+    mode: '0644'
+  notify: Restart PipeWire
+
+- name: Deploy systemd user services
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ ansible_env.HOME }}/.config/systemd/user/{{ item }}"
+    mode: '0644'
+  loop:
+    - sway-sunshine.service
+    - sunshine-headless.service
+  notify: Reload systemd user daemon
+
+- name: Flush handlers to apply systemd/pipewire changes
+  ansible.builtin.meta: flush_handlers
+
+- name: Deploy udev isolation rule
+  ansible.builtin.copy:
+    content: 'ACTION=="add|change", SUBSYSTEM=="input", ATTRS{id/vendor}=="beef", ATTRS{id/product}=="dead", ENV{mutter-device-ignore}="1", GROUP="input", MODE="0660"'
+    dest: /etc/udev/rules.d/85-sunshine-input-isolation.rules
+    mode: '0644'
+  become: true
+  register: udev_rule
+
+- name: Reload udev rules
+  become: true
+  ansible.builtin.command: udevadm control --reload-rules
+  when: udev_rule.changed
+
+- name: Get real path of sunshine binary
+  ansible.builtin.command: readlink -f /usr/bin/sunshine
+  register: sunshine_real_path
+  changed_when: false
+
+- name: Grant Sunshine KMS and NICE capabilities
+  become: true
+  ansible.builtin.shell: |
+    setcap cap_sys_admin,cap_sys_nice=p {{ sunshine_real_path.stdout }}
+  changed_when: true
+
+- name: Trigger udev rules
+  become: true
+  ansible.builtin.command: udevadm trigger --subsystem-match=input
+  when: udev_rule.changed
+
+- name: Discover Tailscale MagicDNS and IP
+  ansible.builtin.shell: |
+    tailscale status --json | jq -r '.Self.DNSName, .Self.TailscaleIPs[0]' | sed 's/.$//'
+  register: tailscale_info
+  changed_when: false
+
+- name: Configure Sunshine CSRF allowed origins
+  ansible.builtin.lineinfile:
+    path: "{{ ansible_env.HOME }}/.config/sunshine/sunshine.conf"
+    regexp: '^csrf_allowed_origins ='
+    line: "csrf_allowed_origins = https://{{ ansible_facts['hostname'] }}:47990,https://localhost:47990,https://{{ tailscale_info.stdout_lines[0] }}:47990,https://{{ tailscale_info.stdout_lines[1] }}:47990"
+    create: true
+    mode: '0644'
+  notify: Restart sunshine-headless
+
+- name: Open Sunshine firewall ports
+  become: true
+  ansible.posix.firewalld:
+    port: "{{ item }}"
+    permanent: true
+    state: enabled
+    immediate: true
+  loop:
+    - 47984-47990/tcp
+    - 47998-48000/udp
+    - 48002/udp
+    - 48010/tcp
+    - 48010/udp
+  when: ansible_facts['os_family'] == 'RedHat'
+
+- name: Ensure services are enabled and started
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: started
+    enabled: true
+    scope: user
+  loop:
+    - sway-sunshine.service
+    - sunshine-headless.service

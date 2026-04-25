@@ -1,0 +1,5 @@
+#!/bin/bash
+# Shim to bypass bubblewrap sandboxing in headless sessions
+# Simply shifts away the bubblewrap-specific flags and executes the command
+shift
+exec "$@"
