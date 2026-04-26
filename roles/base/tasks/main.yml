@@ -1,0 +1,46 @@
+---
+- name: Enable RPM Fusion (Free)
+  ansible.builtin.dnf:
+    name: "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ ansible_distribution_major_version }}.noarch.rpm"
+    state: present
+    disable_gpg_check: true
+  become: true
+
+- name: Enable RPM Fusion (Non-Free)
+  ansible.builtin.dnf:
+    name: "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ ansible_distribution_major_version }}.noarch.rpm"
+    state: present
+    disable_gpg_check: true
+  become: true
+
+- name: Install Intel Media Drivers and Utils
+  ansible.builtin.dnf:
+    name:
+      - intel-media-driver
+      - libva-intel-driver
+      - libva-utils
+    state: present
+  become: true
+
+- name: Enforce stable Intel GuC/HuC state (GuC=2)
+  ansible.builtin.replace:
+    path: /etc/default/grub
+    regexp: 'i915\.enable_guc=[0-9]'
+    replace: 'i915.enable_guc=2'
+  become: true
+  notify:
+    - Update GRUB config
+    - Reboot host
+
+- name: Ensure podman is installed
+  ansible.builtin.dnf:
+    name: podman
+    state: present
+  become: true
+
+- name: Ensure podman.socket is enabled and running
+  ansible.builtin.systemd:
+    name: podman.socket
+    state: started
+    enabled: true
+  become: true

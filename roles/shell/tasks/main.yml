@@ -1,5 +1,4 @@
 ---
-
 - name: Load OS-specific variables
   ansible.builtin.include_vars: "{{ item }}"
   with_first_found:
@@ -71,8 +70,3 @@
   ansible.builtin.command:
     cmd: "loginctl enable-linger {{ ansible_facts['user_id'] }}"
     creates: "/var/lib/systemd/linger/{{ ansible_facts['user_id'] }}"
-
-- name: Include aria2-engine role
-  ansible.builtin.include_role:
-    name: aria2-engine
-  tags: [shell, aria2-engine]

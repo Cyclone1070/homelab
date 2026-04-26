@@ -13,22 +13,6 @@
     state: enabled
   when: ansible_facts['distribution'] == 'Fedora'
 
-- name: Enable RPM Fusion Free Repository
-  become: true
-  ansible.builtin.package:
-    name: "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ ansible_facts['distribution_major_version'] }}.noarch.rpm"
-    state: present
-    disable_gpg_check: true
-  when: ansible_facts['os_family'] == 'RedHat'
-
-- name: Enable RPM Fusion Nonfree Repository
-  become: true
-  ansible.builtin.package:
-    name: "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ ansible_facts['distribution_major_version'] }}.noarch.rpm"
-    state: present
-    disable_gpg_check: true
-  when: ansible_facts['os_family'] == 'RedHat'
-
 - name: Add Antigravity RPM Repository
   become: true
   ansible.builtin.yum_repository:
@@ -63,12 +47,6 @@
     state: link
     force: true
   loop: "{{ desktop_links }}"
-
-
-- name: Include aria2-engine role
-  ansible.builtin.include_role:
-    name: aria2-engine
-  tags: [apps, aria2-engine]
 
 - name: Reload systemd user daemon
   ansible.builtin.systemd:

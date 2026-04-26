@@ -1,0 +1,12 @@
+---
+- name: Update GRUB config
+  ansible.builtin.command: grub2-mkconfig -o /boot/grub2/grub.cfg
+  become: true
+  listen: "Update GRUB config"
+
+- name: Reboot host
+  ansible.builtin.reboot:
+    msg: "Rebooting for kernel parameter enforcement"
+    reboot_timeout: 300
+  become: true
+  listen: "Reboot host"

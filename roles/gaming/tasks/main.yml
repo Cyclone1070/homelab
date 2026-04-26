@@ -1,26 +1,4 @@
 ---
-- name: Install Intel Media Drivers and Utils
-  ansible.builtin.dnf:
-    name:
-      - intel-media-driver
-      - libva-intel-driver
-      - libva-utils
-    state: present
-  become: true
-
-- name: Ensure podman is installed
-  ansible.builtin.dnf:
-    name: podman
-    state: present
-  become: true
-
-- name: Ensure podman.socket is enabled and running
-  ansible.builtin.systemd:
-    name: podman.socket
-    state: started
-    enabled: true
-  become: true
-
 - name: Create Wolf config directory
   ansible.builtin.file:
     path: /etc/wolf
@@ -65,16 +43,6 @@
     enabled: true
     daemon_reload: true
   become: true
-
-- name: Enforce stable Intel GuC/HuC state (GuC=2)
-  ansible.builtin.replace:
-    path: /etc/default/grub
-    regexp: 'i915\.enable_guc=[0-9]'
-    replace: 'i915.enable_guc=2'
-  become: true
-  notify:
-    - Update GRUB config
-    - Reboot host
 
 - name: Open Wolf firewall ports
   become: true
