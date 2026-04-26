@@ -26,7 +26,7 @@ Volume=/run/udev:/run/udev:rw
 Volume=/etc/wolf/:/etc/wolf:z
 Volume=/run/podman/podman.sock:/var/run/docker.sock:ro
 Environment=WOLF_STOP_CONTAINER_ON_EXIT=TRUE
-Environment=WOLF_INTERNAL_IP={{ ansible_tailscale0.ipv4.address }}
+Environment=WOLF_INTERNAL_IP={{ ansible_facts['tailscale0']['ipv4']['address'] }}
 Environment=WOLF_INTERNAL_MAC=00:00:00:00:00:00
 Environment=WOLF_LOG_LEVEL=INFO
 
