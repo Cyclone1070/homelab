@@ -1,17 +1,35 @@
 ---
-- name: Reload systemd user daemon
+- name: Reload systemd daemon
   ansible.builtin.systemd:
     daemon_reload: true
-    scope: user
+  become: true
 
-- name: Restart PipeWire
-  ansible.builtin.systemd:
-    name: pipewire
-    state: restarted
-    scope: user
+- name: Reload udev rules
+  ansible.builtin.command: udevadm control --reload-rules
+  become: true
 
-- name: Restart sunshine-headless
+- name: Restart wolf container
   ansible.builtin.systemd:
-    name: sunshine-headless.service
+    name: wolf
     state: restarted
-    scope: user
+  become: true
+  listen: "Restart wolf container"
+
+- name: Purge zombie containers
+  ansible.builtin.shell: |
+    podman rm -a -f || true
+    podman volume rm -a -f || true
+  become: true
+  listen: "Restart wolf container"
+
+- name: Update GRUB config
+  ansible.builtin.command: grub2-mkconfig -o /boot/grub2/grub.cfg
+  become: true
+  listen: "Update GRUB config"
+
+- name: Reboot host
+  ansible.builtin.reboot:
+    msg: "Rebooting for kernel parameter enforcement"
+    reboot_timeout: 300
+  become: true
+  listen: "Reboot host"

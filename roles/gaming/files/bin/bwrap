@@ -1,6 +1,0 @@
-#!/bin/bash
-# Minimal shim to bypass bwrap core dumps in headless Fedora sessions
-# Shift away bwrap arguments and execute the target directly
-while [[ "$1" == --* ]]; do shift; done
-if [[ "$1" == "--" ]]; then shift; fi
-exec "$@"

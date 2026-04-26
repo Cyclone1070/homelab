@@ -1,184 +1,82 @@
 ---
-- name: Decommission Native Sunshine
-  become: true
-  ansible.builtin.systemd:
-    name: app-dev.lizardbyte.app.Sunshine.service
-    state: stopped
-    enabled: false
-    scope: user
-  ignore_errors: true
-  environment:
-    XDG_RUNTIME_DIR: "/run/user/{{ ansible_real_user_id | default(1000) }}"
-
-- name: Install required packages
+- name: Install Intel Media Drivers and Utils
   ansible.builtin.dnf:
     name:
-      - sway
-      - swaybg
-      - Sunshine
-      - jq
-      - seatd
+      - intel-media-driver
+      - libva-intel-driver
+      - libva-utils
     state: present
   become: true
 
-- name: Ensure user is in required groups
-  ansible.builtin.user:
-    name: "{{ ansible_env.USER }}"
-    groups: video,input,render,seat
-    append: true
+- name: Ensure podman is installed
+  ansible.builtin.dnf:
+    name: podman
+    state: present
   become: true
 
-- name: Enable and start seatd
+- name: Ensure podman.socket is enabled and running
   ansible.builtin.systemd:
-    name: seatd
+    name: podman.socket
     state: started
     enabled: true
   become: true
 
-- name: Install dependencies
-  become: true
-  ansible.builtin.package:
-    name:
-      - pipewire
-      - wireplumber
-    state: present
-
-- name: Create required directories
+- name: Create Wolf config directory
   ansible.builtin.file:
-    path: "{{ item }}"
+    path: /etc/wolf
     state: directory
     mode: '0755'
-  loop:
-    - "{{ ansible_env.HOME }}/.config/sway-sunshine"
-    - "{{ ansible_env.HOME }}/.config/sunshine"
-    - "{{ ansible_env.HOME }}/.config/systemd/user"
-    - "{{ ansible_env.HOME }}/.config/pipewire/pipewire.conf.d"
-    - "{{ ansible_env.HOME }}/.config/sway-sunshine/bin"
+  become: true
 
-- name: Deploy Sway config
-  ansible.builtin.template:
-    src: "sway_config.j2"
-    dest: "{{ ansible_env.HOME }}/.config/sway-sunshine/config"
-    mode: '0644'
-
-- name: Deploy Sway resolution scripts
-  ansible.builtin.template:
-    src: "{{ item }}.j2"
-    dest: "{{ ansible_env.HOME }}/.config/sway-sunshine/{{ item }}"
-    mode: '0755'
-  loop:
-    - set-resolution.sh
-    - reset-resolution.sh
-
-- name: Deploy restore-default-sink.sh
-  ansible.builtin.template:
-    src: "restore-default-sink.sh.j2"
-    dest: "{{ ansible_env.HOME }}/.config/sway-sunshine/restore-default-sink.sh"
-    mode: '0755'
-
-- name: Deploy Steam launch scripts
-  ansible.builtin.template:
-    src: "{{ item }}.j2"
-    dest: "{{ ansible_env.HOME }}/.config/sway-sunshine/{{ item }}"
-    mode: '0755'
-  loop:
-    - start-steam-game.sh
-    - stop-steam-game.sh
-
-- name: Deploy bwrap-shim
+- name: Deploy Wolf udev rules (Virtual Device Support)
   ansible.builtin.copy:
-    src: "roles/gaming/files/bin/bwrap"
-    dest: "{{ ansible_env.HOME }}/.config/sway-sunshine/bin/bwrap"
-    mode: '0755'
+    content: |
+      # Allows Wolf to access /dev/uinput (only needed for joypad support)
+      KERNEL=="uinput", SUBSYSTEM=="misc", MODE="0660", GROUP="input", OPTIONS+="static_node=uinput", TAG+="uaccess"
 
-- name: Deploy Sunshine config
-  ansible.builtin.copy:
-    src: "roles/gaming/files/sunshine-headless-sway/sunshine/sunshine.conf"
-    dest: "{{ ansible_env.HOME }}/.config/sunshine/sunshine.conf"
-    mode: '0644'
-    force: false
+      # Allows Wolf to access /dev/uhid (only needed for DualSense emulation)
+      KERNEL=="uhid", GROUP="input", MODE="0660", TAG+="uaccess"
 
-- name: Configure Sunshine audio and capture
-  ansible.builtin.lineinfile:
-    path: "{{ ansible_env.HOME }}/.config/sunshine/sunshine.conf"
-    regexp: "^{{ item.key }} ="
-    line: "{{ item.key }} = {{ item.value }}"
-  loop:
-    - { key: 'audio_sink', value: 'sink-sunshine-stereo' }
-    - { key: 'capture', value: 'wlr' }
-
-- name: Deploy Sunshine apps.json
-  ansible.builtin.template:
-    src: "apps.json.j2"
-    dest: "{{ ansible_env.HOME }}/.config/sunshine/apps.json"
-    mode: '0644'
-    force: false
-
-- name: Deploy PipeWire null sink config
-  ansible.builtin.copy:
-    src: "roles/gaming/files/sunshine-headless-sway/pipewire/sunshine-null-sink.conf"
-    dest: "{{ ansible_env.HOME }}/.config/pipewire/pipewire.conf.d/sunshine-null-sink.conf"
-    mode: '0644'
-  notify: Restart PipeWire
-
-- name: Deploy systemd user services
-  ansible.builtin.template:
-    src: "{{ item }}.j2"
-    dest: "{{ ansible_env.HOME }}/.config/systemd/user/{{ item }}"
-    mode: '0644'
-  loop:
-    - sway-sunshine.service
-    - sunshine-headless.service
-  notify: Reload systemd user daemon
-
-- name: Flush handlers to apply systemd/pipewire changes
-  ansible.builtin.meta: flush_handlers
-
-- name: Deploy udev isolation rule
-  ansible.builtin.copy:
-    content: 'ACTION=="add|change", SUBSYSTEM=="input", ATTRS{id/vendor}=="beef", ATTRS{id/product}=="dead", ENV{mutter-device-ignore}="1", GROUP="input", MODE="0660"'
-    dest: /etc/udev/rules.d/85-sunshine-input-isolation.rules
+      # Joypads
+      KERNEL=="hidraw*",   ATTRS{name}=="Wolf PS5 (virtual) pad", GROUP="root", MODE="0660", ENV{ID_SEAT}="seat9"
+      SUBSYSTEMS=="input", ATTRS{name}=="Wolf X-Box One (virtual) pad", GROUP="root", MODE="0660", ENV{ID_SEAT}="seat9"
+      SUBSYSTEMS=="input", ATTRS{name}=="Wolf PS5 (virtual) pad", GROUP="root", MODE="0660", ENV{ID_SEAT}="seat9"
+      SUBSYSTEMS=="input", ATTRS{name}=="Wolf gamepad (virtual) motion sensors", GROUP="root", MODE="0660", ENV{ID_SEAT}="seat9"
+      SUBSYSTEMS=="input", ATTRS{name}=="Wolf Nintendo (virtual) pad", GROUP="root", MODE="0660", ENV{ID_SEAT}="seat9"
+    dest: /etc/udev/rules.d/85-wolf-virtual-inputs.rules
     mode: '0644'
   become: true
-  register: udev_rule
+  notify: Reload udev rules
 
-- name: Reload udev rules
-  become: true
-  ansible.builtin.command: udevadm control --reload-rules
-  when: udev_rule.changed
-
-- name: Get real path of sunshine binary
-  ansible.builtin.command: readlink -f /usr/bin/sunshine
-  register: sunshine_real_path
-  changed_when: false
-
-- name: Grant Sunshine KMS and NICE capabilities
-  become: true
-  ansible.builtin.shell: |
-    setcap cap_sys_admin,cap_sys_nice=p {{ sunshine_real_path.stdout }}
-  changed_when: true
-
-- name: Trigger udev rules
-  become: true
-  ansible.builtin.command: udevadm trigger --subsystem-match=input
-  when: udev_rule.changed
-
-- name: Discover Tailscale MagicDNS and IP
-  ansible.builtin.shell: |
-    tailscale status --json | jq -r '.Self.DNSName, .Self.TailscaleIPs[0]' | sed 's/.$//'
-  register: tailscale_info
-  changed_when: false
-
-- name: Configure Sunshine CSRF allowed origins
-  ansible.builtin.lineinfile:
-    path: "{{ ansible_env.HOME }}/.config/sunshine/sunshine.conf"
-    regexp: '^csrf_allowed_origins ='
-    line: "csrf_allowed_origins = https://{{ ansible_facts['hostname'] }}:47990,https://localhost:47990,https://{{ tailscale_info.stdout_lines[0] }}:47990,https://{{ tailscale_info.stdout_lines[1] }}:47990"
-    create: true
+- name: Deploy Wolf Quadlet container definition
+  ansible.builtin.template:
+    src: wolf.container.j2
+    dest: /etc/containers/systemd/wolf.container
     mode: '0644'
-  notify: Restart sunshine-headless
+  become: true
+  notify:
+    - Reload systemd daemon
+    - Restart wolf container
 
-- name: Open Sunshine firewall ports
+- name: Ensure Wolf service is enabled and started
+  ansible.builtin.systemd:
+    name: wolf
+    state: started
+    enabled: true
+    daemon_reload: true
+  become: true
+
+- name: Enforce stable Intel GuC/HuC state (GuC=2)
+  ansible.builtin.replace:
+    path: /etc/default/grub
+    regexp: 'i915\.enable_guc=[0-9]'
+    replace: 'i915.enable_guc=2'
+  become: true
+  notify:
+    - Update GRUB config
+    - Reboot host
+
+- name: Open Wolf firewall ports
   become: true
   ansible.posix.firewalld:
     port: "{{ item }}"
@@ -186,19 +84,10 @@
     state: enabled
     immediate: true
   loop:
-    - 47984-47990/tcp
-    - 47998-48000/udp
-    - 48002/udp
-    - 48010/tcp
-    - 48010/udp
+    - 47984/tcp # HTTPS
+    - 47989/tcp # HTTP
+    - 47999/udp # Control
+    - 48010/tcp # RTSP
+    - 48100/udp # Video
+    - 48200/udp # Audio
   when: ansible_facts['os_family'] == 'RedHat'
-
-- name: Ensure services are enabled and started
-  ansible.builtin.systemd:
-    name: "{{ item }}"
-    state: started
-    enabled: true
-    scope: user
-  loop:
-    - sway-sunshine.service
-    - sunshine-headless.service

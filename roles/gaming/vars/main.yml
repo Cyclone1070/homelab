@@ -1,4 +1,0 @@
----
-sunshine_headless_de: "gnome" # gnome or kde
-sunshine_headless_sunshine_bin: "/usr/bin/sunshine"
-sunshine_headless_wayland_display: "wayland-1"

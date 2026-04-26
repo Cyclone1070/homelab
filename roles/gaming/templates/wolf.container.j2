@@ -1,19 +1,19 @@
 [Unit]
-Description=Wolf Streaming Host (Quadlet)
-Requires=network-online.target
-After=network-online.target
+Description=Wolf / Games On Whales
+Requires=network-online.target podman.socket
+After=network-online.target podman.socket
 
 [Service]
 TimeoutStartSec=900
 ExecStartPre=-/usr/bin/podman rm --force WolfPulseAudio
-Restart=always
+Restart=on-failure
 RestartSec=5
 StartLimitBurst=5
 
 [Container]
 AutoUpdate=registry
-ContainerName=wolf
-HostName=wolf
+ContainerName=%p
+HostName=%p
 Image=ghcr.io/games-on-whales/wolf:stable
 Network=host
 SecurityLabelDisable=true
@@ -21,16 +21,14 @@ PodmanArgs=--ipc=host --device-cgroup-rule "c 13:* rmw"
 AddDevice=/dev/dri
 AddDevice=/dev/uinput
 AddDevice=/dev/uhid
-Volume=/dev:/dev:rw
+Volume=/dev/:/dev/:rw
 Volume=/run/udev:/run/udev:rw
-Volume=/etc/wolf:/etc/wolf:z
+Volume=/etc/wolf/:/etc/wolf:z
 Volume=/run/podman/podman.sock:/var/run/docker.sock:ro
-Environment=WOLF_INTERNAL_IP={{ ansible_facts['tailscale0']['ipv4']['address'] }}
-Environment=WOLF_INTERNAL_MAC=00:00:00:00:00:00
-Environment=INTEL_DEBUG=norbc
-Environment=LIBVA_DRIVER_NAME=iHD
-Environment=WOLF_LOG_LEVEL=INFO
 Environment=WOLF_STOP_CONTAINER_ON_EXIT=TRUE
+Environment=WOLF_INTERNAL_IP={{ ansible_tailscale0.ipv4.address }}
+Environment=WOLF_INTERNAL_MAC=00:00:00:00:00:00
+Environment=WOLF_LOG_LEVEL=INFO
 
 [Install]
 WantedBy=multi-user.target
