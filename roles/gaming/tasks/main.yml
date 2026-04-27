@@ -13,6 +13,27 @@
   ansible.builtin.set_fact:
     wolf_uuid: "{{ wolf_uuid_output.stdout | trim }}"
 
+- name: Create Wolf persistent data directory
+  ansible.builtin.file:
+    path: "/etc/wolf/profile-data/user/WolfSteam"
+    state: directory
+    mode: '0777'
+    recurse: false
+  become: true
+
+- name: Purge ghost input nodes from host
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /dev/input/event14
+    - /dev/input/event15
+    - /dev/input/event16
+    - /dev/input/js0
+    - /dev/input/js1
+    - /dev/input/mouse1
+  become: true
+
 - name: Create Wolf config directory
   ansible.builtin.file:
     path: "{{ item }}"

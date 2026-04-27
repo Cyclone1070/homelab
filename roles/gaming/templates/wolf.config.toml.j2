@@ -22,9 +22,8 @@ icon_png_path = "https://raw.githubusercontent.com/games-on-whales/wolf-ui/refs/
 base_create_json = '''{
       "HostConfig": {
         "IpcMode": "host",
-        "CapAdd": ["NET_RAW", "MKNOD", "NET_ADMIN", "SYS_ADMIN", "SYS_NICE"],
-        "Privileged": false,
-        "DeviceCgroupRules": ["c 13:* rmw", "c 244:* rmw"]
+        "Privileged": true,
+        "Binds": ["/dev:/dev:rw"]
       }
     }'''
 devices = []
@@ -88,9 +87,8 @@ base_create_json = """
 {
   "HostConfig": {
     "IpcMode": "host",
-    "Privileged": false,
-    "CapAdd": ["NET_RAW", "MKNOD", "NET_ADMIN"],
-    "DeviceCgroupRules": ["c 13:* rmw", "c 244:* rmw"]
+    "Privileged": true,
+    "Binds": ["/dev:/dev:rw"]
   }
 }
 \
@@ -118,7 +116,8 @@ base_create_json = """
     "IpcMode": "host",
     "CapAdd": ["NET_RAW", "MKNOD", "NET_ADMIN", "SYS_ADMIN", "SYS_NICE"],
     "Privileged": false,
-    "DeviceCgroupRules": ["c 13:* rmw", "c 244:* rmw"]
+    "DeviceCgroupRules": ["c 13:* rmw", "c 10:223 rmw"],
+    "GroupAdd": ["104"]
   }
 }
 \
@@ -128,16 +127,14 @@ base_create_json = """
 title = "Steam"
 icon_png_path = "https://games-on-whales.github.io/wildlife/apps/steam/assets/icon.png"
 start_virtual_compositor = true
+app_state_folder = "profile-data/user/WolfSteam"
 
 [profiles.apps.runner]
 type = "docker"
 name = "WolfSteam"
 image = "ghcr.io/games-on-whales/steam:edge"
 mounts = [
-    "{{ ansible_user_dir }}/games:/games:rw",
-    "/etc/wolf/profile-data/user/WolfSteam/.steam:/home/retro/.steam:rw",
-    "/dev:/dev:rw",
-    "/run/udev/data:/run/udev/data:ro"
+    "/home/cyc/games:/games:rw"
 ]
 env = [
     "PROTON_LOG=1",
@@ -150,11 +147,10 @@ base_create_json = """
 {
   "HostConfig": {
     "IpcMode": "host",
-    "PidMode": "host",
-    "NetworkMode": "host",
     "SecurityOpt": ["seccomp=unconfined", "apparmor=unconfined"],
     "Ulimits": [{"Name":"nofile", "Hard":10240, "Soft":10240}],
-    "Privileged": true
+    "Privileged": true,
+    "Binds": ["/dev:/dev:rw"]
   }
 }
 \
@@ -182,7 +178,8 @@ base_create_json = """
     "IpcMode": "host",
     "CapAdd": ["NET_RAW", "MKNOD", "NET_ADMIN", "SYS_ADMIN", "SYS_NICE"],
     "Privileged": false,
-    "DeviceCgroupRules": ["c 13:* rmw", "c 244:* rmw"]
+    "DeviceCgroupRules": ["c 13:* rmw", "c 10:223 rmw"],
+    "GroupAdd": ["104"]
   }
 }
 \
@@ -212,7 +209,8 @@ base_create_json = """
     "SecurityOpt": ["seccomp=unconfined", "apparmor=unconfined"],
     "Ulimits": [{"Name":"nofile", "Hard":524288, "Soft":524288}],
     "Privileged": false,
-    "DeviceCgroupRules": ["c 13:* rmw", "c 244:* rmw"]
+    "DeviceCgroupRules": ["c 13:* rmw", "c 10:223 rmw"],
+    "GroupAdd": ["104"]
   }
 }
 \
@@ -240,7 +238,8 @@ base_create_json = """
     "IpcMode": "host",
     "CapAdd": ["NET_RAW", "MKNOD", "NET_ADMIN", "SYS_ADMIN", "SYS_NICE"],
     "Privileged": false,
-    "DeviceCgroupRules": ["c 13:* rmw", "c 244:* rmw"]
+    "DeviceCgroupRules": ["c 13:* rmw", "c 10:223 rmw"],
+    "GroupAdd": ["104"]
   }
 }
 \
@@ -265,7 +264,8 @@ base_create_json = """
     "Privileged": false,
     "CapAdd": ["SYS_ADMIN", "SYS_NICE", "SYS_PTRACE", "NET_RAW", "MKNOD", "NET_ADMIN"],
     "SecurityOpt": ["seccomp=unconfined", "apparmor=unconfined"],
-    "DeviceCgroupRules": ["c 13:* rmw", "c 244:* rmw"]
+    "DeviceCgroupRules": ["c 13:* rmw", "c 10:223 rmw"],
+    "GroupAdd": ["104"]
   }
 }
 \
@@ -287,9 +287,8 @@ base_create_json = """
 {
   "HostConfig": {
     "IpcMode": "host",
-    "Privileged": false,
-    "CapAdd": ["NET_RAW", "MKNOD", "NET_ADMIN"],
-    "DeviceCgroupRules": ["c 13:* rmw", "c 244:* rmw"]
+    "Privileged": true,
+    "Binds": ["/dev:/dev:rw"]
   }
 }
 \
@@ -313,7 +312,8 @@ base_create_json = """
     "IpcMode": "host",
     "Privileged": false,
     "CapAdd": ["NET_RAW", "MKNOD", "NET_ADMIN"],
-    "DeviceCgroupRules": ["c 13:* rmw", "c 244:* rmw"]
+    "DeviceCgroupRules": ["c 13:* rmw", "c 10:223 rmw"],
+    "GroupAdd": ["104"]
   }
 }
 \
@@ -392,7 +392,7 @@ video/x-h265, profile=main, stream-format=byte-stream\
 plugin_name = "va"
 check_elements = ["vah265enc", "vapostproc"]
 encoder_pipeline = """
-vah265enc aud=false b-frames=0 ref-frames=1 num-slices={slices_per_frame} bitrate={bitrate} cpb-size={vbv_buffer_size} min-qp=20 key-int-max=1024 rate-control=cbr target-usage=6 !
+vah265enc aud=false b-frames=0 ref-frames=1 num-slices={{ wolf_slices }} bitrate={bitrate} cpb-size={vbv_buffer_size} min-qp=20 key-int-max=1024 rate-control=cbr target-usage={{ wolf_target_usage }} !
 h265parse !
 video/x-h265, profile=main, stream-format=byte-stream\
 """
@@ -401,7 +401,7 @@ video/x-h265, profile=main, stream-format=byte-stream\
 plugin_name = "qsv"
 check_elements = ["qsvh265enc", "vapostproc"]
 encoder_pipeline = """
-qsvh265enc b-frames=0 gop-size=0 idr-interval=1 ref-frames=1 bitrate={bitrate} rate-control=cbr low-latency=1 target-usage=6 !
+qsvh265enc b-frames=0 gop-size=0 idr-interval=1 ref-frames=1 num-slices={{ wolf_slices }} bitrate={bitrate} rate-control=cbr low-latency=1 target-usage={{ wolf_target_usage }} !
 h265parse !
 video/x-h265, profile=main, stream-format=byte-stream\
 """
@@ -410,7 +410,7 @@ video/x-h265, profile=main, stream-format=byte-stream\
 plugin_name = "va"
 check_elements = ["vah265lpenc", "vapostproc"] # lp: (Low Power)
 encoder_pipeline = """
-vah265lpenc aud=false b-frames=0 ref-frames=1 num-slices={slices_per_frame} bitrate={bitrate} cpb-size={vbv_buffer_size} min-qp=20 key-int-max=1024 rate-control=cbr target-usage=6 !
+vah265lpenc aud=false b-frames=0 ref-frames=1 num-slices={{ wolf_slices }} bitrate={bitrate} cpb-size={vbv_buffer_size} min-qp=20 key-int-max=1024 rate-control=cbr target-usage={{ wolf_target_usage }} !
 h265parse !
 video/x-h265, profile=main, stream-format=byte-stream\
 """
@@ -454,7 +454,7 @@ video/x-h264, profile=main, stream-format=byte-stream\
 plugin_name = "va"
 check_elements = ["vah264enc", "vapostproc"]
 encoder_pipeline = """
-vah264enc aud=false b-frames=0 ref-frames=1 num-slices={slices_per_frame} bitrate={bitrate} cpb-size={vbv_buffer_size} min-qp=20 key-int-max=1024 rate-control=cbr target-usage=6 !
+vah264enc aud=false b-frames=0 ref-frames=1 num-slices={{ wolf_slices }} bitrate={bitrate} cpb-size={vbv_buffer_size} min-qp=20 key-int-max=1024 rate-control=cbr target-usage={{ wolf_target_usage }} !
 h264parse !
 video/x-h264, profile=main, stream-format=byte-stream\
 """
@@ -463,7 +463,7 @@ video/x-h264, profile=main, stream-format=byte-stream\
 plugin_name = "va"
 check_elements = ["vah264lpenc", "vapostproc"] # lp: (Low Power)
 encoder_pipeline = """
-vah264lpenc aud=false b-frames=0 ref-frames=1 num-slices={slices_per_frame} bitrate={bitrate} cpb-size={vbv_buffer_size} min-qp=20 key-int-max=1024 rate-control=cbr target-usage=6 !
+vah264lpenc aud=false b-frames=0 ref-frames=1 num-slices={{ wolf_slices }} bitrate={bitrate} cpb-size={vbv_buffer_size} min-qp=20 key-int-max=1024 rate-control=cbr target-usage={{ wolf_target_usage }} !
 h264parse !
 video/x-h264, profile=main, stream-format=byte-stream\
 """
@@ -472,7 +472,7 @@ video/x-h264, profile=main, stream-format=byte-stream\
 plugin_name = "qsv"
 check_elements = ["qsvh264enc", "vapostproc"]
 encoder_pipeline = """
-qsvh264enc b-frames=0 gop-size=0 idr-interval=1 ref-frames=1 bitrate={bitrate} rate-control=cbr target-usage=6  !
+qsvh264enc b-frames=0 gop-size=0 idr-interval=1 ref-frames=1 num-slices={{ wolf_slices }} bitrate={bitrate} rate-control=cbr target-usage={{ wolf_target_usage }} !
 h264parse !
 video/x-h264, profile=main, stream-format=byte-stream\
 """
@@ -503,7 +503,7 @@ video/x-av1, stream-format=obu-stream, alignment=frame, profile=main\
 plugin_name = "va"
 check_elements = ["vaav1enc", "vapostproc"]
 encoder_pipeline = """
-vaav1enc ref-frames=1 bitrate={bitrate} cpb-size={vbv_buffer_size} key-int-max=1024 rate-control=cbr min-qp=20 target-usage=6 !
+vaav1enc ref-frames=1 bitrate={bitrate} cpb-size={vbv_buffer_size} key-int-max=1024 rate-control=cbr min-qp=20 target-usage={{ wolf_target_usage }} !
 av1parse !
 video/x-av1, stream-format=obu-stream, alignment=frame, profile=main\
 """
@@ -512,7 +512,7 @@ video/x-av1, stream-format=obu-stream, alignment=frame, profile=main\
 plugin_name = "va"
 check_elements = ["vaav1lpenc", "vapostproc"] # LP = Low Power
 encoder_pipeline = """
-vaav1lpenc ref-frames=1 bitrate={bitrate} cpb-size={vbv_buffer_size} key-int-max=1024 rate-control=cbr min-qp=20 target-usage=6 !
+vaav1lpenc ref-frames=1 bitrate={bitrate} cpb-size={vbv_buffer_size} key-int-max=1024 rate-control=cbr min-qp=20 target-usage={{ wolf_target_usage }} !
 av1parse !
 video/x-av1, stream-format=obu-stream, alignment=frame, profile=main\
 """
@@ -521,7 +521,7 @@ video/x-av1, stream-format=obu-stream, alignment=frame, profile=main\
 plugin_name = "qsv"
 check_elements = ["qsvav1enc", "vapostproc"]
 encoder_pipeline = """
-qsvav1enc gop-size=0 ref-frames=1 bitrate={bitrate} rate-control=cbr low-latency=1 target-usage=6 !
+qsvav1enc gop-size=0 ref-frames=1 num-slices={{ wolf_slices }} bitrate={bitrate} rate-control=cbr low-latency=1 target-usage={{ wolf_target_usage }} !
 av1parse !
 video/x-av1, stream-format=obu-stream, alignment=frame, profile=main\
 """
