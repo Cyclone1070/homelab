@@ -54,11 +54,79 @@
   become: true
   notify: "gaming : Reload udev rules"
 
-- name: Deploy Wolf configuration
+- name: Harvest existing paired clients from host
+  ansible.builtin.shell: |
+    set -o pipefail
+    python3 -c '
+    import sys
+    try:
+        with open("/etc/wolf/cfg/config.toml", "r") as f:
+            content = f.read()
+            pattern = "[[paired_clients]]"
+            start = content.find(pattern)
+            if start != -1:
+                import re
+                # Search after the current section header
+                end_match = re.search(r"\n\s*\[+", content[start + len(pattern):])
+                if end_match:
+                    end = start + len(pattern) + end_match.start()
+                    print(content[start:end].strip())
+                else:
+                    print(content[start:].strip())
+    except:
+        pass
+    '
+  register: paired_clients_harvest
+  become: true
+  changed_when: false
+
+- name: Set paired clients fact
+  ansible.builtin.set_fact:
+    harvested_clients: "{{ paired_clients_harvest.stdout }}"
+
+- name: Stage new Wolf configuration
   ansible.builtin.template:
     src: wolf.config.toml.j2
-    dest: /etc/wolf/cfg/config.toml
+    dest: /etc/wolf/cfg/config.toml.ansible
     mode: '0644'
+  become: true
+  changed_when: false
+
+- name: Compare current and new configuration logically
+  ansible.builtin.shell: |
+    python3 -c '
+    import tomllib
+    import sys
+    import json
+
+    try:
+        with open("/etc/wolf/cfg/config.toml", "rb") as f1, open("/etc/wolf/cfg/config.toml.ansible", "rb") as f2:
+            c1 = tomllib.load(f1)
+            c2 = tomllib.load(f2)
+            if c1 == c2:
+                sys.exit(0)
+            else:
+                import difflib
+                s1 = json.dumps(c1, sort_keys=True, indent=2)
+                s2 = json.dumps(c2, sort_keys=True, indent=2)
+                print("\n".join(difflib.unified_diff(s1.splitlines(), s2.splitlines())))
+                sys.exit(1)
+    except Exception as e:
+        print(f"Error: {e}")
+        sys.exit(1)
+    '
+  register: config_diff
+  failed_when: false
+  changed_when: config_diff.rc != 0
+  become: true
+
+- name: Deploy Wolf configuration
+  ansible.builtin.copy:
+    src: /etc/wolf/cfg/config.toml.ansible
+    dest: /etc/wolf/cfg/config.toml
+    remote_src: true
+    mode: '0644'
+  when: config_diff.rc != 0
   become: true
   notify: "gaming : Restart Wolf"
 
@@ -74,6 +142,7 @@
 
 - name: Purge zombie containers before starting Wolf
   ansible.builtin.shell: |
+    set -o pipefail
     {% raw %}
     # Stop and remove any container containing 'wolf' (case-insensitive)
     for container in $(podman ps -a --format '{{.Names}}' | grep -i wolf); do
