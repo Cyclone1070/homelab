@@ -17,7 +17,7 @@ HostName=%p
 Image=ghcr.io/games-on-whales/wolf:stable
 Network=host
 SecurityLabelDisable=true
-PodmanArgs=--ipc=host --device-cgroup-rule "c 13:* rmw"
+PodmanArgs=--ipc=host --device-cgroup-rule "c 13:* rmw" --device-cgroup-rule "c 10:223 rmw" --group-add 104 --cap-add SYS_ADMIN --cap-add NET_ADMIN --cap-add SYS_NICE --cap-add MKNOD
 AddDevice=/dev/dri
 AddDevice=/dev/uinput
 AddDevice=/dev/uhid

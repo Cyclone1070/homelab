@@ -1,4 +1,18 @@
 ---
+- name: Ensure stable Wolf UUID exists
+  ansible.builtin.shell: |
+    if [ ! -f /etc/wolf/cfg/uuid.txt ]; then
+      cat /proc/sys/kernel/random/uuid > /etc/wolf/cfg/uuid.txt
+    fi
+    cat /etc/wolf/cfg/uuid.txt
+  register: wolf_uuid_output
+  become: true
+  changed_when: false
+
+- name: Set Wolf UUID fact
+  ansible.builtin.set_fact:
+    wolf_uuid: "{{ wolf_uuid_output.stdout | trim }}"
+
 - name: Create Wolf config directory
   ansible.builtin.file:
     path: "{{ item }}"
