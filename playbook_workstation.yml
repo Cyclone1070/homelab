@@ -15,3 +15,5 @@
       tags: desktop
     - role: apps
       tags: [apps]
+    - role: gaming
+      tags: [gaming, apps]

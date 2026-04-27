@@ -1,0 +1,76 @@
+---
+- name: Create Wolf config directory
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  become: true
+  loop:
+    - /etc/wolf/cfg
+    - /etc/wolf/run
+
+- name: Deploy Wolf udev rules
+  ansible.builtin.copy:
+    content: |
+      KERNEL=="uinput", SUBSYSTEM=="misc", OPTIONS+="static_node=uinput", MODE="0660", GROUP="input"
+      KERNEL=="uhid", SUBSYSTEM=="misc", MODE="0660", GROUP="input"
+    dest: /etc/udev/rules.d/85-wolf.rules
+    mode: '0644'
+  become: true
+  notify: "gaming : Reload udev rules"
+
+- name: Deploy Wolf configuration
+  ansible.builtin.template:
+    src: wolf.config.toml.j2
+    dest: /etc/wolf/cfg/config.toml
+    mode: '0644'
+  become: true
+  notify: "gaming : Restart Wolf"
+
+- name: Deploy Wolf Quadlet container definition
+  ansible.builtin.template:
+    src: wolf.container.j2
+    dest: /etc/containers/systemd/wolf.container
+    mode: '0644'
+  become: true
+  notify:
+    - "gaming : Reload systemd daemon"
+    - "gaming : Restart Wolf"
+
+- name: Purge zombie containers before starting Wolf
+  ansible.builtin.shell: |
+    {% raw %}
+    # Stop and remove any container containing 'wolf' (case-insensitive)
+    for container in $(podman ps -a --format '{{.Names}}' | grep -i wolf); do
+      podman stop "$container" || true
+      podman rm -f "$container" || true
+    done
+    {% endraw %}
+  become: true
+  changed_when: false
+
+- name: Flush handlers to ensure systemd is reloaded
+  ansible.builtin.meta: flush_handlers
+
+- name: Ensure Wolf service is enabled and started
+  ansible.builtin.systemd:
+    name: wolf
+    state: started
+    enabled: true
+  become: true
+
+- name: Open Wolf firewall ports
+  ansible.builtin.firewalld:
+    port: "{{ item }}"
+    permanent: true
+    state: enabled
+    immediate: true
+  become: true
+  loop:
+    - 47984/tcp
+    - 47989/tcp
+    - 47999/udp
+    - 48010/tcp
+    - 48100/udp
+    - 48200/udp
+  when: ansible_facts['os_family'] == 'RedHat'
