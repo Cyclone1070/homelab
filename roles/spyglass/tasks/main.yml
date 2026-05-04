@@ -8,6 +8,15 @@
     state: directory
     mode: '0755'
 
+- name: Pull latest Spyglass images
+  containers.podman.podman_image:
+    name: "{{ item }}"
+    force: true
+  loop:
+    - docker.io/cyclone1070/spyglass-backend:latest
+    - docker.io/cloudflare/cloudflared:latest
+  register: images_pull
+
 - name: Deploy Spyglass Kubernetes Manifest
   ansible.builtin.template:
     src: spyglass.yaml.j2
@@ -24,9 +33,12 @@
 
 - name: Reload systemd and restart services
   ansible.builtin.systemd:
+    name: spyglass
+    state: restarted
+    enabled: true
     scope: user
     daemon_reload: true
-  when: kube_manifest.changed or kube_quadlet.changed
+  when: images_pull.changed or kube_manifest.changed or kube_quadlet.changed
 
 - name: Ensure Spyglass Pod is started
   ansible.builtin.systemd:
