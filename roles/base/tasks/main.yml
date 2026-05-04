@@ -38,9 +38,8 @@
     state: present
   become: true
 
-- name: Ensure podman.socket is enabled and running
-  ansible.builtin.systemd:
-    name: podman.socket
-    state: started
-    enabled: true
+- name: Enable user lingering for background services
   become: true
+  ansible.builtin.command:
+    cmd: "loginctl enable-linger {{ ansible_facts['user_id'] }}"
+    creates: "/var/lib/systemd/linger/{{ ansible_facts['user_id'] }}"

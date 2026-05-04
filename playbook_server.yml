@@ -4,7 +4,11 @@
     - vars/secrets.yml
 
   roles:
+    - role: base
+      tags: base
     - role: git
       tags: git
     - role: shell
       tags: shell
+    - role: spyglass
+      tags: spyglass

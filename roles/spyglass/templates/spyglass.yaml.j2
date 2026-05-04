@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: spyglass
+  labels:
+    app: spyglass
+spec:
+  containers:
+    - name: server
+      image: docker.io/cyclone1070/spyglass-backend:latest
+      ports:
+        - containerPort: 8080
+      env:
+        - name: MongoDbSettings__ConnectionString
+          value: "{{ spyglass_mongo_db_connection_string }}"
+        - name: MongoDbSettings__DatabaseName
+          value: "SpyglassDb"
+        - name: ASPNETCORE_URLS
+          value: "http://+:8080"
+      resources: {}
+
+    - name: tunnel
+      image: docker.io/cloudflare/cloudflared:latest
+      args:
+        - tunnel
+        - --no-autoupdate
+        - run
+      env:
+        - name: TUNNEL_TOKEN
+          value: "{{ spyglass_cloudflare_backend_token }}"
+      resources: {}

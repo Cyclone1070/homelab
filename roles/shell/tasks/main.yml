@@ -65,8 +65,3 @@
     name: aria2p
     state: present
 
-- name: Enable user lingering for background services
-  become: true
-  ansible.builtin.command:
-    cmd: "loginctl enable-linger {{ ansible_facts['user_id'] }}"
-    creates: "/var/lib/systemd/linger/{{ ansible_facts['user_id'] }}"

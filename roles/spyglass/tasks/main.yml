@@ -1,0 +1,36 @@
+---
+- name: Load spyglass secrets
+  ansible.builtin.include_vars: secrets.yml
+
+- name: Ensure Quadlet directory exists
+  ansible.builtin.file:
+    path: "~/.config/containers/systemd"
+    state: directory
+    mode: '0755'
+
+- name: Deploy Spyglass Kubernetes Manifest
+  ansible.builtin.template:
+    src: spyglass.yaml.j2
+    dest: "~/.config/containers/systemd/spyglass.yaml"
+    mode: '0644'
+  register: kube_manifest
+
+- name: Deploy Spyglass Kube Quadlet
+  ansible.builtin.template:
+    src: spyglass.kube.j2
+    dest: "~/.config/containers/systemd/spyglass.kube"
+    mode: '0644'
+  register: kube_quadlet
+
+- name: Reload systemd and restart services
+  ansible.builtin.systemd:
+    scope: user
+    daemon_reload: true
+  when: kube_manifest.changed or kube_quadlet.changed
+
+- name: Ensure Spyglass Pod is started
+  ansible.builtin.systemd:
+    name: spyglass
+    state: started
+    enabled: true
+    scope: user
