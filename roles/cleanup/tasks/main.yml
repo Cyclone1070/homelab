@@ -13,7 +13,7 @@
   when: (playbook_dir + '/roles/' + item + '/vars') is directory
 
 - name: Aggregate all managed package variables
-  set_fact:
+  ansible.builtin.set_fact:
     cleanup_managed_packages: >-
       {{ hostvars[inventory_hostname].keys()
          | select('search', cleanup_package_vars_suffix)
@@ -21,7 +21,7 @@
          | flatten | unique }}
 
 - name: Aggregate all managed repository variables
-  set_fact:
+  ansible.builtin.set_fact:
     cleanup_managed_repos: "{{ repos_raw | from_json }}"
   vars:
     repos_raw: >-
@@ -35,7 +35,7 @@
 
 # 2. Read previous state from the remote machine (Isolated by Playbook Name)
 - name: Set state file path fact
-  set_fact:
+  ansible.builtin.set_fact:
     cleanup_state_file: "~/.config/ansible/{{ (ansible_play_name | lower | replace(' ', '-')) }}-installed.yml"
 
 - name: Ensure ansible config directory exists
@@ -47,41 +47,44 @@
 - name: Check if state file exists
   ansible.builtin.stat:
     path: "{{ cleanup_state_file }}"
-  register: installed_state_file
+  register: cleanup_installed_state_file
 
 - name: Load previous state
   ansible.builtin.slurp:
     src: "{{ cleanup_state_file }}"
-  register: installed_state_b64
-  when: installed_state_file.stat.exists
+  register: cleanup_installed_state_b64
+  when: cleanup_installed_state_file.stat.exists
 
 - name: Parse previous state
-  set_fact:
-    previous_state: "{{ (installed_state_b64.content | b64decode | from_yaml) if installed_state_file.stat.exists else {'installed_packages': [], 'installed_repos': []} }}"
+  ansible.builtin.set_fact:
+    cleanup_previous_state: >-
+      {{ (cleanup_installed_state_b64.content | b64decode | from_yaml)
+         if cleanup_installed_state_file.stat.exists
+         else {'installed_packages': [], 'installed_repos': []} }}
 
 # 3. Calculate orphans (in previous state but not in current desired state)
 - name: Calculate orphans
-  set_fact:
-    packages_to_remove: "{{ previous_state.installed_packages | default([]) | difference(cleanup_managed_packages) }}"
-    repos_to_remove: "{{ previous_state.installed_repos | default([]) | difference(cleanup_managed_repos) }}"
+  ansible.builtin.set_fact:
+    cleanup_packages_to_remove: "{{ cleanup_previous_state.installed_packages | default([]) | difference(cleanup_managed_packages) }}"
+    cleanup_repos_to_remove: "{{ cleanup_previous_state.installed_repos | default([]) | difference(cleanup_managed_repos) }}"
 
 # 4. Remove orphans
 - name: Remove orphaned .repo files
   ansible.builtin.file:
     path: "/etc/yum.repos.d/{{ item }}.repo"
     state: absent
-  loop: "{{ repos_to_remove }}"
+  loop: "{{ cleanup_repos_to_remove }}"
   become: true
-  when: repos_to_remove | length > 0
+  when: cleanup_repos_to_remove | length > 0
 
 - name: Remove orphaned packages
   ansible.builtin.package:
     name: "{{ item }}"
     state: absent
-  loop: "{{ packages_to_remove }}"
+  loop: "{{ cleanup_packages_to_remove }}"
   become: true
   failed_when: false
-  when: packages_to_remove | length > 0
+  when: cleanup_packages_to_remove | length > 0
 
 - name: Perform deep dependency cleanup (Fedora only)
   ansible.builtin.dnf5:
@@ -89,7 +92,7 @@
   become: true
   when:
     - ansible_facts['os_family'] == 'RedHat'
-    - packages_to_remove | length > 0
+    - cleanup_packages_to_remove | length > 0
 
 # 5. Save current desired state to become the previous state for next run
 - name: Save current state
@@ -98,7 +101,7 @@
     content: |
       ---
       installed_packages:
-      {{ cleanup_managed_packages | to_nice_yaml | indent(2, first=True) }}
+      {{ cleanup_managed_packages | sort | to_nice_yaml | indent(2, first=True) }}
       installed_repos:
-      {{ cleanup_managed_repos | to_nice_yaml | indent(2, first=True) }}
+      {{ cleanup_managed_repos | sort | to_nice_yaml | indent(2, first=True) }}
     mode: '0644'

@@ -12,7 +12,7 @@
 
   post_tasks:
     - name: Run final state reconciliation
-      include_role:
+      ansible.builtin.include_role:
         name: cleanup
         apply:
           tags: [always, cleanup]
