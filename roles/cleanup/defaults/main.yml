@@ -1,0 +1,4 @@
+---
+# Suffixes for dynamic variable harvesting (The Convention)
+cleanup_package_vars_suffix: "_packages$"
+cleanup_repo_vars_suffix: "_repos$"

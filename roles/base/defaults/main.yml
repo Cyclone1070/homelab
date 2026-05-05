@@ -1,6 +1,18 @@
-base_intel_media_packages:
+---
+base_packages:
   - intel-media-driver
   - libva-intel-driver
   - libva-utils
+  - podman
+  - rpmfusion-free-release
+  - rpmfusion-nonfree-release
 
-base_podman_package: podman
+base_repo_release_urls:
+  - "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ ansible_facts['distribution_major_version'] }}.noarch.rpm"
+  - "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ ansible_facts['distribution_major_version'] }}.noarch.rpm"
+
+base_repos:
+  - rpmfusion-free
+  - rpmfusion-free-updates
+  - rpmfusion-nonfree
+  - rpmfusion-nonfree-updates

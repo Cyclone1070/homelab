@@ -2,4 +2,11 @@
 - name: Bootstrap fresh machine
   hosts: all
   roles:
-    - bootstrap
+    - role: bootstrap
+      tags: bootstrap
+
+  post_tasks:
+    - name: Run final state reconciliation
+      include_role:
+        name: cleanup
+      tags: [always, cleanup]

@@ -1,37 +1,35 @@
 ---
-- name: Enable RPM Fusion (Free)
-  ansible.builtin.package:
-    name: "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ ansible_facts['distribution_major_version'] }}.noarch.rpm"
-    state: present
+- name: Install RPM Fusion Release Packages
   become: true
+  ansible.builtin.package:
+    name: "{{ base_repo_release_urls }}"
+    state: present
 
-- name: Enable RPM Fusion (Non-Free)
-  ansible.builtin.package:
-    name: "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ ansible_facts['distribution_major_version'] }}.noarch.rpm"
-    state: present
+- name: Enforce RPM Fusion Repo State
   become: true
+  community.general.ini_file:
+    path: "/etc/yum.repos.d/{{ item }}.repo"
+    section: "{{ item }}"
+    option: enabled
+    value: "1"
+    mode: '0644'
+  loop: "{{ base_repos }}"
 
-- name: Install Intel Media Drivers and Utils
-  ansible.builtin.package:
-    name: "{{ base_intel_media_packages }}"
-    state: present
+- name: Install Base Packages
   become: true
+  ansible.builtin.package:
+    name: "{{ base_packages }}"
+    state: present
 
 - name: Enforce stable Intel GuC/HuC state (GuC=2)
+  become: true
   ansible.builtin.replace:
     path: /etc/default/grub
     regexp: 'i915\.enable_guc=[0-9]'
     replace: 'i915.enable_guc=2'
-  become: true
   notify:
     - Update GRUB config
     - Reboot host
-
-- name: Ensure podman is installed
-  ansible.builtin.package:
-    name: "{{ base_podman_package }}"
-    state: present
-  become: true
 
 - name: Enable user lingering for background services
   become: true

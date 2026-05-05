@@ -1,2 +1,3 @@
 ---
-desktop_environment_group: "@workstation-product-environment"
+desktop_packages:
+  - "@workstation-product-environment"

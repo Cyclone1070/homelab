@@ -1,3 +1,10 @@
 ---
 bootstrap_packages:
   - tailscale
+
+bootstrap_repos:
+  tailscale-stable:
+    description: Tailscale stable
+    baseurl: https://pkgs.tailscale.com/stable/fedora/$basearch
+    gpgcheck: true
+    gpgkey: https://pkgs.tailscale.com/stable/fedora/repo.gpg

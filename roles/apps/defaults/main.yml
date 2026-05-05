@@ -1,7 +1,18 @@
 apps_dotfiles_dest: "~/repos/dotfiles"
 
-apps_desktop_packages:
+apps_packages:
   - antigravity
   - brave-browser
   - uget
+  - steam
 
+apps_repos:
+  antigravity-rpm:
+    description: Antigravity RPM Repository
+    baseurl: https://us-central1-yum.pkg.dev/projects/antigravity-auto-updater-dev/antigravity-rpm
+    gpgcheck: false
+  brave-browser:
+    description: Brave Browser Repository
+    baseurl: https://brave-browser-rpm-release.s3.brave.com/x86_64/
+    gpgcheck: true
+    gpgkey: https://brave-browser-rpm-release.s3.brave.com/brave-core.asc

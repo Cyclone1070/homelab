@@ -1,28 +1,20 @@
-- name: Add Antigravity RPM Repository
+---
+- name: Add 3rd Party Repositories
   become: true
   ansible.builtin.yum_repository:
-    name: antigravity-rpm
-    description: Antigravity RPM Repository
-    baseurl: https://us-central1-yum.pkg.dev/projects/antigravity-auto-updater-dev/antigravity-rpm
-    enabled: true
-    gpgcheck: false
+    name: "{{ item.key }}"
+    description: "{{ item.value.description }}"
+    baseurl: "{{ item.value.baseurl }}"
+    enabled: "{{ item.value.enabled | default(true) }}"
+    gpgcheck: "{{ item.value.gpgcheck | default(true) }}"
+    gpgkey: "{{ item.value.gpgkey | default(omit) }}"
+  loop: "{{ apps_repos | dict2items }}"
   when: ansible_facts['os_family'] == 'RedHat'
 
-- name: Add Brave Browser Repository
-  become: true
-  ansible.builtin.yum_repository:
-    name: brave-browser
-    description: Brave Browser Repository
-    baseurl: https://brave-browser-rpm-release.s3.brave.com/x86_64/
-    enabled: true
-    gpgcheck: true
-    gpgkey: https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
-  when: ansible_facts['os_family'] == 'RedHat'
-
-- name: Install Desktop Applications
+- name: Install Desktop Apps
   become: true
   ansible.builtin.package:
-    name: "{{ apps_desktop_packages }}"
+    name: "{{ apps_packages }}"
     state: present
 
 - name: Reload systemd user daemon

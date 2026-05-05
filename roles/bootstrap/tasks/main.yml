@@ -1,3 +1,16 @@
+---
+- name: Add 3rd Party Repositories
+  become: true
+  ansible.builtin.yum_repository:
+    name: "{{ item.key }}"
+    description: "{{ item.value.description }}"
+    baseurl: "{{ item.value.baseurl }}"
+    enabled: "{{ item.value.enabled | default(true) }}"
+    gpgcheck: "{{ item.value.gpgcheck | default(true) }}"
+    gpgkey: "{{ item.value.gpgkey | default(omit) }}"
+  loop: "{{ bootstrap_repos | dict2items }}"
+  when: ansible_facts['os_family'] == 'RedHat'
+
 - name: Install Bootstrap Packages
   become: true
   ansible.builtin.package:
@@ -68,12 +81,6 @@
     - "~/.ssh/id_ed25519.pub"
     - "~/.ssh/id_rsa.pub"
     - "~/.ssh/id_ecdsa.pub"
-
-- name: Install Tailscale
-  become: true
-  ansible.builtin.package:
-    name: "{{ bootstrap_packages }}"
-    state: present
 
 - name: Enable and start Tailscale service
   become: true

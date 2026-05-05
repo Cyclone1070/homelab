@@ -1,14 +1,19 @@
+---
 - name: Server Configuration
   hosts: all
-  vars_files:
-    - vars/secrets.yml
 
   roles:
-    - role: base
-      tags: base
     - role: git
       tags: git
     - role: shell
       tags: shell
     - role: spyglass
       tags: spyglass
+
+  post_tasks:
+    - name: Run final state reconciliation
+      include_role:
+        name: cleanup
+        apply:
+          tags: [always, cleanup]
+      tags: [always, cleanup]

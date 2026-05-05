@@ -1,7 +1,7 @@
 - name: Install Desktop Environment
   become: true
   ansible.builtin.package:
-    name: "{{ desktop_environment_group }}"
+    name: "{{ desktop_packages }}"
     state: present
 
 - name: Ensure default boot is Server Mode (Multi-User)

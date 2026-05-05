@@ -2,7 +2,7 @@
 - name: Install aria2
   become: true
   ansible.builtin.package:
-    name: aria2
+    name: "{{ aria2_engine_packages }}"
     state: present
 
 - name: Ensure aria2 configuration directory exists
