@@ -13,7 +13,7 @@
 
 - name: Install Intel Media Drivers and Utils
   ansible.builtin.package:
-    name: "{{ intel_media_packages }}"
+    name: "{{ base_intel_media_packages }}"
     state: present
   become: true
 
@@ -29,7 +29,7 @@
 
 - name: Ensure podman is installed
   ansible.builtin.package:
-    name: "{{ podman_package }}"
+    name: "{{ base_podman_package }}"
     state: present
   become: true
 

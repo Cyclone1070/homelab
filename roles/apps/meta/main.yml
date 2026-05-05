@@ -1,4 +1,4 @@
 ---
 dependencies:
   - role: base
-  - role: aria2-engine
+  - role: aria2_engine

@@ -16,12 +16,12 @@
     dest: "~/.config/aria2/aria2.conf"
     content: |
       enable-rpc=true
-      rpc-listen-port={{ aria2_port }}
-      rpc-listen-all={{ aria2_rpc_listen_all | lower }}
+      rpc-listen-port={{ aria2_engine_port }}
+      rpc-listen-all={{ aria2_engine_rpc_listen_all | lower }}
       rpc-allow-origin-all=true
       dir={{ ansible_facts['user_dir'] }}/Downloads
-      max-connection-per-server={{ aria2_max_connections }}
-      split={{ aria2_split }}
+      max-connection-per-server={{ aria2_engine_max_connections }}
+      split={{ aria2_engine_split }}
       force-save=false
       seed-time=0
       max-download-result=20

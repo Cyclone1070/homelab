@@ -2,6 +2,7 @@
 - name: Update GRUB config
   ansible.builtin.command: grub2-mkconfig -o /boot/grub2/grub.cfg
   become: true
+  changed_when: true
   listen: "Update GRUB config"
 
 - name: Reboot host

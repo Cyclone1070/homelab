@@ -29,16 +29,16 @@
 - name: Install Desktop Applications
   become: true
   ansible.builtin.package:
-    name: "{{ desktop_packages }}"
+    name: "{{ apps_desktop_packages }}"
     state: present
 
 - name: Create Desktop Config Symlinks
   ansible.builtin.file:
-    src: "{{ dotfiles_dest }}/{{ item.src }}"
+    src: "{{ apps_dotfiles_dest }}/{{ item.src }}"
     dest: "{{ item.dest }}"
     state: link
     force: true
-  loop: "{{ desktop_links }}"
+  loop: "{{ apps_desktop_links }}"
 
 - name: Reload systemd user daemon
   ansible.builtin.systemd:

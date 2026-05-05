@@ -5,11 +5,11 @@
     state: present
 
 - name: Generate SSH key for GitHub
-  ansible.builtin.openssh_keypair:
+  community.crypto.openssh_keypair:
     path: "~/.ssh/id_github"
     type: ed25519
     state: present
-  register: github_ssh_key
+  register: git_github_ssh_key
 
 - name: Configure Git Global Name
   community.general.git_config:
@@ -35,14 +35,14 @@
     body_format: json
     body:
       title: "Homelab Key ({{ ansible_facts['hostname'] }})"
-      key: "{{ github_ssh_key.public_key }}"
+      key: "{{ git_github_ssh_key.public_key }}"
     status_code: [201, 422]
-  register: github_api_result
-  changed_when: "github_api_result.status == 201"
+  register: git_github_api_result
+  changed_when: "git_github_api_result.status == 201"
 
 - name: Check if GitHub is in known_hosts
   ansible.builtin.command: ssh-keygen -F github.com
-  register: github_in_known_hosts
+  register: git_github_in_known_hosts
   changed_when: false
   failed_when: false
 
@@ -52,7 +52,7 @@
     key: "{{ lookup('pipe', 'ssh-keyscan -t ed25519 github.com') }}"
     path: "~/.ssh/known_hosts"
     state: present
-  when: github_in_known_hosts.rc != 0
+  when: git_github_in_known_hosts.rc != 0
 
 - name: Configure SSH to use id_github for GitHub
   ansible.builtin.blockinfile:

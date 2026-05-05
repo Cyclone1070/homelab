@@ -18,27 +18,27 @@
 - name: Check Oh My Zsh custom directory
   ansible.builtin.stat:
     path: "~/.oh-my-zsh/custom"
-  register: omz_custom_stat
+  register: shell_omz_custom_stat
 
 - name: Remove default Oh My Zsh custom directory
   ansible.builtin.file:
     path: "~/.oh-my-zsh/custom"
     state: absent
   when:
-    - omz_custom_stat.stat.exists
-    - not omz_custom_stat.stat.islnk
+    - shell_omz_custom_stat.stat.exists
+    - not shell_omz_custom_stat.stat.islnk
 
 - name: Ensure parent directories exist
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
     mode: '0755'
-  loop: "{{ dotfiles_dirs }}"
+  loop: "{{ shell_dotfiles_dirs }}"
 
 - name: Clone dotfiles repository
   ansible.builtin.git:
-    repo: "{{ dotfiles_repo }}"
-    dest: "{{ dotfiles_dest }}"
+    repo: "{{ shell_dotfiles_repo }}"
+    dest: "{{ shell_dotfiles_dest }}"
     update: true
     force: true
     accept_hostkey: true
@@ -46,11 +46,11 @@
 
 - name: Create dotfile symlinks
   ansible.builtin.file:
-    src: "{{ dotfiles_dest }}/{{ item.src }}"
+    src: "{{ shell_dotfiles_dest }}/{{ item.src }}"
     dest: "{{ item.dest }}"
     state: link
     force: true
-  loop: "{{ dotfiles_links }}"
+  loop: "{{ shell_dotfiles_links }}"
 
 - name: Install aria2p via pipx
   community.general.pipx:

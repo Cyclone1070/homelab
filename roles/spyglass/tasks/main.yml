@@ -15,21 +15,21 @@
   loop:
     - docker.io/cyclone1070/spyglass-backend:latest
     - docker.io/cloudflare/cloudflared:latest
-  register: images_pull
+  register: spyglass_images_pull
 
 - name: Deploy Spyglass Kubernetes Manifest
   ansible.builtin.template:
     src: spyglass.yaml.j2
     dest: "~/.config/containers/systemd/spyglass.yaml"
     mode: '0644'
-  register: kube_manifest
+  register: spyglass_kube_manifest
 
 - name: Deploy Spyglass Kube Quadlet
   ansible.builtin.template:
     src: spyglass.kube.j2
     dest: "~/.config/containers/systemd/spyglass.kube"
     mode: '0644'
-  register: kube_quadlet
+  register: spyglass_kube_quadlet
 
 - name: Reload systemd and restart services
   ansible.builtin.systemd:
@@ -38,7 +38,7 @@
     enabled: true
     scope: user
     daemon_reload: true
-  when: images_pull.changed or kube_manifest.changed or kube_quadlet.changed
+  when: spyglass_images_pull.changed or spyglass_kube_manifest.changed or spyglass_kube_quadlet.changed
 
 - name: Ensure Spyglass Pod is started
   ansible.builtin.systemd:

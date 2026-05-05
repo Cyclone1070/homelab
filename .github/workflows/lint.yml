@@ -1,0 +1,20 @@
+name: CI
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  lint:
+    name: Ansible Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Collections
+        run: ansible-galaxy collection install -r collections/requirements.yml
+
+      - name: Run Ansible Lint
+        uses: ansible/ansible-lint@main

@@ -1,6 +1,5 @@
----
-dotfiles_repo: "git@github.com:Cyclone1070/dotfiles.git"
-dotfiles_dest: "~/repos/dotfiles"
+shell_dotfiles_repo: "git@github.com:Cyclone1070/dotfiles.git"
+shell_dotfiles_dest: "~/repos/dotfiles"
 
 shell_packages:
   - zsh
@@ -14,7 +13,7 @@ shell_packages:
   - p7zip-plugins
   - unar
 
-dotfiles_links:
+shell_dotfiles_links:
   - { src: "zsh/.zshrc", dest: "~/.zshrc" }
   - { src: "zsh/.p10k.zsh", dest: "~/.p10k.zsh" }
   - { src: "tmux/.tmux.conf", dest: "~/.tmux.conf" }
@@ -22,7 +21,7 @@ dotfiles_links:
   - { src: "nvim", dest: "~/.config/nvim" }
   - { src: "zsh/custom", dest: "~/.oh-my-zsh/custom" }
 
-dotfiles_dirs:
+shell_dotfiles_dirs:
   - "~/repos"
   - "~/.config"
   - "~/.oh-my-zsh"

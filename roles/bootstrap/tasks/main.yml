@@ -22,7 +22,7 @@
     body_format: form-urlencoded
     body:
       grant_type: client_credentials
-  register: oauth_token
+  register: bootstrap_oauth_token
 
 - name: Discover Tailnet name from devices
   delegate_to: localhost
@@ -30,12 +30,12 @@
   ansible.builtin.uri:
     url: "https://api.tailscale.com/api/v2/tailnet/-/devices"
     headers:
-      Authorization: "Bearer {{ oauth_token.json.access_token }}"
-  register: devices_list
+      Authorization: "Bearer {{ bootstrap_oauth_token.json.access_token }}"
+  register: bootstrap_devices_list
 
 - name: Set discovered tailnet fact
   ansible.builtin.set_fact:
-    discovered_tailnet: "{{ devices_list.json.devices[0].name.split('.', 1)[1] }}"
+    bootstrap_discovered_tailnet: "{{ bootstrap_devices_list.json.devices[0].name.split('.', 1)[1] }}"
 
 - name: Enable passwordless sudo for user
   become: true
@@ -59,7 +59,7 @@
 
 - name: Deploy SSH public key
   become: true
-  ansible.builtin.authorized_key:
+  ansible.posix.authorized_key:
     user: "{{ ansible_user | default(lookup('env', 'USER')) }}"
     state: present
     key: "{{ lookup('file', item) }}"
@@ -83,7 +83,7 @@
 
 - name: Check Tailscale status
   ansible.builtin.command: tailscale status --json
-  register: tailscale_status_raw
+  register: bootstrap_tailscale_status_raw
   changed_when: false
   failed_when: false
 
@@ -92,11 +92,11 @@
   ansible.builtin.command:
     cmd: "tailscale up --authkey={{ tailscale_client_secret }} --advertise-tags=tag:homelab --accept-routes"
   when:
-    - tailscale_status_raw.stdout == "" or
-      (tailscale_status_raw.stdout | from_json).MagicDNSSuffix | default('') != discovered_tailnet or
-      'tag:homelab' not in (tailscale_status_raw.stdout | from_json).Self.Tags | default([])
-  register: tailscale_join_result
-  changed_when: tailscale_join_result.rc == 0
+    - bootstrap_tailscale_status_raw.stdout == "" or
+      (bootstrap_tailscale_status_raw.stdout | from_json).MagicDNSSuffix | default('') != bootstrap_discovered_tailnet or
+      'tag:homelab' not in (bootstrap_tailscale_status_raw.stdout | from_json).Self.Tags | default([])
+  register: bootstrap_tailscale_join_result
+  changed_when: bootstrap_tailscale_join_result.rc == 0
 
 - name: Silence terminal login banners (Hushlogin)
   ansible.builtin.copy:
