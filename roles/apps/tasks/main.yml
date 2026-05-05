@@ -1,11 +1,3 @@
----
-- name: Load OS-specific variables
-  ansible.builtin.include_vars: "{{ item }}"
-  with_first_found:
-    - "{{ ansible_facts['distribution'] }}.yml"
-    - "{{ ansible_facts['os_family'] }}.yml"
-    - "default.yml"
-
 - name: Enable Ghostty COPR (Fedora)
   become: true
   community.general.copr:

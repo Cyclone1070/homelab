@@ -1,0 +1,7 @@
+---
+intel_media_packages:
+  - intel-media-driver
+  - libva-intel-driver
+  - libva-utils
+
+podman_package: podman

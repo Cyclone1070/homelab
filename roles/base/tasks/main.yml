@@ -1,24 +1,19 @@
 ---
 - name: Enable RPM Fusion (Free)
-  ansible.builtin.dnf:
+  ansible.builtin.package:
     name: "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ ansible_facts['distribution_major_version'] }}.noarch.rpm"
     state: present
-    disable_gpg_check: true
   become: true
 
 - name: Enable RPM Fusion (Non-Free)
-  ansible.builtin.dnf:
+  ansible.builtin.package:
     name: "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ ansible_facts['distribution_major_version'] }}.noarch.rpm"
     state: present
-    disable_gpg_check: true
   become: true
 
 - name: Install Intel Media Drivers and Utils
-  ansible.builtin.dnf:
-    name:
-      - intel-media-driver
-      - libva-intel-driver
-      - libva-utils
+  ansible.builtin.package:
+    name: "{{ intel_media_packages }}"
     state: present
   become: true
 
@@ -33,8 +28,8 @@
     - Reboot host
 
 - name: Ensure podman is installed
-  ansible.builtin.dnf:
-    name: podman
+  ansible.builtin.package:
+    name: "{{ podman_package }}"
     state: present
   become: true
 

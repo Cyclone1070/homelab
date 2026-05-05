@@ -1,11 +1,3 @@
----
-- name: Load OS-specific variables
-  ansible.builtin.include_vars: "{{ item }}"
-  with_first_found:
-    - "{{ ansible_facts['distribution'] }}.yml"
-    - "{{ ansible_facts['os_family'] }}.yml"
-    - "default.yml"
-
 - name: Install system packages
   become: true
   ansible.builtin.package:
@@ -64,4 +56,3 @@
   community.general.pipx:
     name: aria2p
     state: present
-
