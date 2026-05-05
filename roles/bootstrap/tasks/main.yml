@@ -1,4 +1,5 @@
 - name: Install Bootstrap Packages
+  become: true
   ansible.builtin.package:
     name: "{{ bootstrap_packages }}"
     state: present

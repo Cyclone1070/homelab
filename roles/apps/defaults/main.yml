@@ -1,10 +1,7 @@
 apps_dotfiles_dest: "~/repos/dotfiles"
 
 apps_desktop_packages:
-  - ghostty
   - antigravity
   - brave-browser
   - uget
 
-apps_desktop_links:
-  - { src: "ghostty", dest: "~/.config/ghostty" }
