@@ -1,6 +1,14 @@
-# Ansible Homelab Setup
+# Homelab Infrastructure
 
-This directory contains playbooks and inventory for managing the homelab.
+Automated Fedora-based homelab management using Ansible. This repository provides a declarative way to bootstrap fresh machines, configure servers, and set up workstation environments with seamless Tailscale networking.
+
+## Available Playbooks
+
+- **`playbook_bootstrap.yml`**: The entry point for fresh Fedora installs. Handles hostname configuration, SSH hardening, and automated Tailscale authorization.
+- **`playbook_server.yml`**: Configures basic essenstials like git and shell, then server-specific services including Spyglass. 
+- **`playbook_workstation.yml`**: Sets up a full developer workstation environment including shell customizations, desktop apps, and programming languages.
+
+# Usage Guide
 
 ## Prerequisites
 
