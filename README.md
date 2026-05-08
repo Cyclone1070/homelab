@@ -15,7 +15,9 @@ Automated Fedora-based homelab management using Ansible. This repository provide
 Before running the bootstrap, ensure the following are configured:
 
 ### 1. Configure Secrets
-Copy `ansible/vars/secrets.yml.example` to `ansible/vars/secrets.yml` and fill in your Tailscale and GitHub credentials.
+
+- **Global Secrets**: Copy `group_vars/all/secrets.yml.example` to `group_vars/all/secrets.yml` and fill in your Tailscale and GitHub credentials.
+- **Role Secrets**: Some roles (e.g., Spyglass) have their own `vars/secrets.yml.example`. Ensure these are copied to `vars/secrets.yml` before deployment.
 
 ### 2. Local Machine Setup
 
@@ -59,4 +61,4 @@ ansible-playbook playbook_server.yml
 
 ## Security Note
 
-The `vars/secrets.yml` contains Tailscale OAuth credentials. This file is currently ignored by Git. Check your root `.gitignore` to verify it's active.
+The `secrets.yml` files contain sensitive credentials (Tailscale, Cloudflare, etc.). These files are ignored by Git. Check your root `.gitignore` to verify protection is active.
