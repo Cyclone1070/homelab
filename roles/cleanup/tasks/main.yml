@@ -3,12 +3,16 @@
 - name: Load all role defaults (including dependencies and sub-files)
   ansible.builtin.include_vars:
     dir: "{{ playbook_dir }}/roles/{{ item }}/defaults"
+    ignore_files:
+      - '\.example$'
   loop: "{{ ansible_role_names }}"
   when: (playbook_dir + '/roles/' + item + '/defaults') is directory
 
 - name: Load all role vars (including secrets and overrides)
   ansible.builtin.include_vars:
     dir: "{{ playbook_dir }}/roles/{{ item }}/vars"
+    ignore_files:
+      - '\.example$'
   loop: "{{ ansible_role_names }}"
   when: (playbook_dir + '/roles/' + item + '/vars') is directory
 
