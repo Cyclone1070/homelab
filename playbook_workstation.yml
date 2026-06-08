@@ -3,6 +3,8 @@
   hosts: all
 
   roles:
+    - role: base
+      tags: [base]
     - role: git
       tags: git
     - role: shell

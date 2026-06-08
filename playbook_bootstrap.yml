@@ -2,6 +2,8 @@
 - name: Bootstrap fresh machine
   hosts: all
   roles:
+    - role: base
+      tags: [base, bootstrap]
     - role: bootstrap
       tags: bootstrap
 
