@@ -19,9 +19,6 @@ shell_dotfiles_links:
   - { src: "tmux/.tmux.conf", dest: "~/.tmux.conf" }
   - { src: "tmux/.tmux", dest: "~/.tmux" }
   - { src: "nvim", dest: "~/.config/nvim" }
-  - { src: "zsh/custom", dest: "~/.oh-my-zsh/custom" }
-
 shell_dotfiles_dirs:
   - "~/repos"
   - "~/.config"
-  - "~/.oh-my-zsh"

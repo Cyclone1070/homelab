@@ -10,24 +10,6 @@
     name: "{{ ansible_user | default(lookup('env', 'USER')) }}"
     shell: /usr/bin/zsh
 
-- name: Install Oh My Zsh
-  ansible.builtin.shell:
-    cmd: sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-    creates: "~/.oh-my-zsh"
-
-- name: Check Oh My Zsh custom directory
-  ansible.builtin.stat:
-    path: "~/.oh-my-zsh/custom"
-  register: shell_omz_custom_stat
-
-- name: Remove default Oh My Zsh custom directory
-  ansible.builtin.file:
-    path: "~/.oh-my-zsh/custom"
-    state: absent
-  when:
-    - shell_omz_custom_stat.stat.exists
-    - not shell_omz_custom_stat.stat.islnk
-
 - name: Ensure parent directories exist
   ansible.builtin.file:
     path: "{{ item }}"
